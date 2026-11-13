@@ -1,0 +1,24 @@
+{
+  "name": "bug-of-gratitude",
+  "private": true,
+  "version": "0.1.0",
+  "description": "BUG OF GRATITUDE - Interactive mini-game for CodeGym 20/11/2026",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "node --check src/main.js src/config/constants.js src/config/phaserConfig.js src/core/EventBus.js src/core/SceneManager.js src/core/GameManager.js"
+  },
+  "dependencies": {
+    "gsap": "^3.12.5",
+    "phaser": "^3.80.1"
+  },
+  "devDependencies": {
+    "vite": "^5.4.11"
+  },
+  "overrides": {
+    "rollup": "npm:@rollup/wasm-node@^4.24.0"
+  }
+}
+
