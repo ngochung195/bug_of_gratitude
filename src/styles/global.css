@@ -1,18 +1,55 @@
 body {
-  background-color: var(--color-bg-primary);
+  background-color: var(--color-bg-deep);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.6;
+  overflow: hidden;
+  user-select: none;
 }
 
 #app {
   position: relative;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.16), transparent 45%),
+    radial-gradient(circle at 80% 75%, rgba(0, 229, 255, 0.12), transparent 50%),
+    linear-gradient(180deg, var(--color-bg-deep) 0%, var(--color-bg-primary) 100%);
+}
+
+/* Subtle Cyber Grid & Scanlines Background */
+#app::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 229, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.045) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#app::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.14) 0px,
+    rgba(0, 0, 0, 0.14) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.45;
 }
 
 #game-container {
@@ -30,9 +67,28 @@ body {
   width: 100%;
   height: 100%;
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
 }
 
 #ui-layer > * {
   pointer-events: auto;
 }
 
+/* Keyboard Accessibility Focus Ring */
+:focus-visible {
+  outline: 2px solid var(--color-electric-blue);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

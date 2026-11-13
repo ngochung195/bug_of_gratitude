@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "node --check src/main.js src/config/constants.js src/config/phaserConfig.js src/core/EventBus.js src/core/SceneManager.js src/core/GameManager.js"
+    "lint": "node --check src/main.js src/config/constants.js src/config/phaserConfig.js src/core/EventBus.js src/core/SceneManager.js src/core/GameManager.js src/core/UIManager.js src/utils/icons.js src/components/Button.js src/components/ProgressBar.js src/components/LoadingIndicator.js src/components/Modal.js src/components/Dialog.js src/components/Notification.js src/components/screens/IntroScreen.js src/components/screens/LoadingScreen.js src/components/screens/GameShell.js"
   },
   "dependencies": {
     "gsap": "^3.12.5",
@@ -21,4 +21,3 @@
     "rollup": "npm:@rollup/wasm-node@^4.24.0"
   }
 }
-

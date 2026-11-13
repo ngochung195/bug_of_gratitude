@@ -1,0 +1,430 @@
+/* =========================================
+   SHARED UI COMPONENTS (Retro Pixel + Cyberpunk)
+   ========================================= */
+
+/* 1. Button Component */
+.bog-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-3) var(--space-5);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-primary);
+  background: var(--color-bg-elevated);
+  border: 2px solid var(--color-electric-blue-soft);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-pixel);
+  cursor: pointer;
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.bog-btn__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.bog-btn__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.bog-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 4px 6px 0px #050811, var(--glow-blue);
+}
+
+.bog-btn:active:not(:disabled),
+.bog-btn.is-active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: var(--shadow-pixel-sm);
+}
+
+.bog-btn:disabled,
+.bog-btn.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+  filter: grayscale(0.4);
+}
+
+/* Button Variants */
+.bog-btn--primary {
+  background: linear-gradient(135deg, #6d28d9 0%, #2563eb 100%);
+  border-color: var(--color-electric-blue);
+  color: #ffffff;
+}
+
+.bog-btn--primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7c3aed 0%, #0284c7 100%);
+  box-shadow: 4px 6px 0px #050811, var(--glow-purple);
+}
+
+.bog-btn--secondary {
+  background: rgba(17, 24, 48, 0.9);
+  border-color: var(--color-neon-purple);
+  color: var(--color-text-primary);
+}
+
+.bog-btn--secondary:hover:not(:disabled) {
+  background: rgba(139, 92, 246, 0.18);
+  border-color: var(--color-electric-blue);
+}
+
+.bog-btn--warm {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(217, 119, 6, 0.35));
+  border-color: var(--color-warm-gold-bright);
+  color: #fef3c7;
+}
+
+.bog-btn--warm:hover:not(:disabled) {
+  box-shadow: 4px 6px 0px #050811, var(--glow-warm);
+}
+
+.bog-btn--danger {
+  background: rgba(244, 63, 94, 0.16);
+  border-color: var(--color-cyber-pink);
+  color: #ffe4e6;
+}
+
+.bog-btn--danger:hover:not(:disabled) {
+  background: rgba(244, 63, 94, 0.28);
+  box-shadow: 4px 6px 0px #050811, var(--glow-pink);
+}
+
+.bog-btn--ghost {
+  min-height: 40px;
+  padding: var(--space-2) var(--space-3);
+  background: rgba(17, 25, 48, 0.75);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: var(--shadow-pixel-sm);
+}
+
+/* 2. Cyber Card / Panel */
+.bog-card {
+  position: relative;
+  background: var(--color-bg-surface);
+  border: var(--border-neon-purple);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-pixel), var(--glow-purple);
+  backdrop-filter: blur(10px);
+  padding: var(--space-5);
+}
+
+.bog-card::before,
+.bog-card::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: var(--color-electric-blue);
+  border-style: solid;
+  pointer-events: none;
+}
+
+.bog-card::before {
+  top: -1px;
+  left: -1px;
+  border-width: 2px 0 0 2px;
+}
+
+.bog-card::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 2px 2px 0;
+}
+
+/* 3. Progress Bar Component */
+.bog-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.bog-progress__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.04em;
+}
+
+.bog-progress__value {
+  color: var(--color-electric-blue);
+  font-weight: 700;
+}
+
+.bog-progress__track {
+  position: relative;
+  width: 100%;
+  height: 14px;
+  background: rgba(7, 11, 20, 0.9);
+  border: 1px solid rgba(0, 229, 255, 0.45);
+  border-radius: 3px;
+  overflow: hidden;
+  padding: 2px;
+}
+
+.bog-progress__fill {
+  position: relative;
+  height: 100%;
+  width: 0%;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      var(--color-neon-purple) 0px,
+      var(--color-electric-blue) 12px,
+      rgba(7, 11, 20, 0.4) 12px,
+      rgba(7, 11, 20, 0.4) 14px
+    );
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.6);
+  transition: width var(--transition-normal);
+}
+
+.bog-progress__fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  animation: scanSweep 2.2s linear infinite;
+}
+
+/* 4. Loading Indicator Component */
+.bog-loading-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-electric-blue);
+}
+
+.bog-loading-indicator__blocks {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.bog-loading-indicator__block {
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-electric-blue);
+  box-shadow: 0 0 6px var(--color-electric-blue);
+  animation: pulseGlow 1s ease-in-out infinite;
+}
+
+.bog-loading-indicator__block:nth-child(2) {
+  background-color: var(--color-neon-purple-bright);
+  animation-delay: 0.2s;
+}
+
+.bog-loading-indicator__block:nth-child(3) {
+  background-color: var(--color-cyber-pink);
+  animation-delay: 0.4s;
+}
+
+.bog-loading-indicator__cursor {
+  display: inline-block;
+  width: 8px;
+  height: 14px;
+  background: var(--color-electric-blue);
+  vertical-align: middle;
+  margin-left: 4px;
+  animation: blinkCursor 1s infinite;
+}
+
+/* 5. Modal Component */
+.bog-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background: var(--color-bg-overlay);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--transition-normal),
+    visibility var(--transition-normal);
+}
+
+.bog-modal-backdrop.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.bog-modal {
+  width: 100%;
+  max-width: 480px;
+  background: linear-gradient(180deg, #131c38 0%, #0b1021 100%);
+  border: 2px solid var(--color-neon-purple);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-pixel), var(--glow-purple);
+  overflow: hidden;
+  transform: translateY(10px) scale(0.98);
+  transition: transform var(--transition-normal);
+}
+
+.bog-modal-backdrop.is-open .bog-modal {
+  transform: translateY(0) scale(1);
+}
+
+.bog-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-5);
+  background: rgba(139, 92, 246, 0.16);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.35);
+}
+
+.bog-modal__title {
+  font-family: var(--font-pixel);
+  font-size: 0.875rem;
+  color: var(--color-electric-blue);
+  letter-spacing: 0.05em;
+}
+
+.bog-modal__close {
+  background: transparent;
+  border: 1px solid rgba(203, 213, 225, 0.3);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.bog-modal__close:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-cyber-pink);
+  background: rgba(244, 63, 94, 0.18);
+}
+
+.bog-modal__body {
+  padding: var(--space-5);
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}
+
+.bog-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5) var(--space-5);
+}
+
+/* 6. Dialog / Interaction Hint Box */
+.bog-dialog {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  background: rgba(11, 16, 33, 0.92);
+  border: 1px solid rgba(0, 229, 255, 0.45);
+  border-left: 4px solid var(--color-electric-blue);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  box-shadow: var(--shadow-pixel-sm), var(--glow-blue);
+}
+
+.bog-dialog__content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+}
+
+.bog-dialog__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #070b14;
+  background: var(--color-electric-blue);
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.bog-dialog__key {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-warm-gold-bright);
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  background: rgba(245, 158, 11, 0.12);
+  padding: 2px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+/* 7. Notification Toast */
+.bog-toast-container {
+  position: fixed;
+  top: 76px;
+  right: var(--space-4);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  pointer-events: none;
+}
+
+.bog-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 260px;
+  max-width: 360px;
+  padding: var(--space-3) var(--space-4);
+  background: rgba(17, 25, 48, 0.96);
+  border: 1px solid var(--color-electric-blue);
+  border-left: 4px solid var(--color-electric-blue);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-pixel-sm), var(--glow-blue);
+  color: var(--color-text-primary);
+  font-size: 0.85rem;
+  pointer-events: auto;
+  animation: fadeIn 180ms ease-out;
+}
+
+.bog-toast--warm {
+  border-color: var(--color-warm-gold-bright);
+  border-left-color: var(--color-warm-gold-bright);
+  box-shadow: var(--shadow-pixel-sm), var(--glow-warm);
+}
+
+.bog-toast--success {
+  border-color: var(--color-success);
+  border-left-color: var(--color-success);
+}
