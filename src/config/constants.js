@@ -7,9 +7,12 @@ export const APP_CONFIG = {
   TOTAL_MISSIONS: 4,
   MAX_WRONG_ATTEMPTS: 3,
   GRATITUDE_MAX_LENGTH: 300,
+  DEFAULT_PAGE_SIZE: 12,
+  REACTION_COOLDOWN_MS: 1200,
   STORAGE_KEY: 'bog_mission_progress_v1',
   GRATITUDE_STORAGE_KEY: 'bog_gratitude_letters_v1',
   GRATITUDE_DRAFT_KEY: 'bog_gratitude_draft_v1',
+  REACTION_STORAGE_KEY: 'bog_reacted_messages_v1',
 };
 
 export const UI_SCREENS = {
@@ -62,4 +65,6 @@ export const EVENTS = {
   LAST_BUG_TRIGGERED: 'last_bug:triggered',
   FIX_LAST_BUG_REQUESTED: 'last_bug:fix_requested',
   GRATITUDE_SUBMITTED: 'gratitude:submitted',
+  GRATITUDE_APPROVED_RECEIVED: 'gratitude:approved_received',
+  GRATITUDE_REACTION_ADDED: 'gratitude:reaction_added',
 };

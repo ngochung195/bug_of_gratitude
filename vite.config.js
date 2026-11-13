@@ -15,6 +15,7 @@ export default defineConfig({
         manualChunks: {
           phaser: ['phaser'],
           gsap: ['gsap'],
+          supabase: ['@supabase/supabase-js'],
         },
       },
     },

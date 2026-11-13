@@ -6,7 +6,9 @@ import { createLastBugScreen } from '../components/screens/LastBugScreen.js';
 import { createLoadingScreen } from '../components/screens/LoadingScreen.js';
 import { notification } from '../components/Notification.js';
 import { EVENTS, UI_SCREENS } from '../config/constants.js';
+import { gratitudeService } from '../services/GratitudeService.js';
 import { gratitudeStorage } from '../services/GratitudeStorage.js';
+import { isSupabaseConfigured } from '../services/supabaseClient.js';
 import { lastBugController } from '../systems/LastBugController.js';
 import { missionManager } from '../systems/MissionManager.js';
 import { eventBus } from './EventBus.js';
@@ -31,6 +33,11 @@ export class UIManager {
     notification.mount(document.body);
     this.registerEvents();
     window.addEventListener('keydown', this.handleKeyDown);
+
+    // One-time background migration for any unsynced LocalStorage letters
+    gratitudeService.syncUnsyncedLocalLetters().catch(() => {
+      // Handled gracefully inside service
+    });
 
     this.showScreen(UI_SCREENS.INTRO);
   }
@@ -69,6 +76,7 @@ export class UIManager {
   createRainStandbyScreen() {
     const latest = gratitudeStorage.getLatestLetter();
     const totalSaved = gratitudeStorage.getAllLetters().length;
+    const cloudConfigured = isSupabaseConfigured();
 
     const section = document.createElement('section');
     section.className = 'bog-screen gratitude-screen';
@@ -78,17 +86,28 @@ export class UIManager {
     card.className = 'bog-card intro-panel';
     card.style.borderColor = 'var(--color-warm-gold-bright)';
 
+    const syncStatusText = latest?.isSynced
+      ? 'Đã đồng bộ lên Supabase (Trạng thái: is_approved = false — Chờ duyệt công khai).'
+      : cloudConfigured
+        ? 'Đã lưu bản sao cục bộ và đang chờ đồng bộ lên Supabase.'
+        : 'Đã lưu vào LocalStorage (Chế độ Offline / Chưa cấu hình .env Supabase).';
+
     card.innerHTML = `
-      <span class="gratitude-header__badge">RAIN OF GRATITUDE // STANDBY</span>
+      <span class="gratitude-header__badge">RAIN OF GRATITUDE // SUPABASE READY</span>
       <h1 class="gratitude-header__title">THANK YOU FOR YOUR GRATITUDE</h1>
       <p class="gratitude-header__quote">"BUG #005: MISSING GRATITUDE — STATUS: RESOLVED"</p>
       <div class="about-highlight" style="width: 100%; text-align: left;">
         <p><strong>Gửi tới:</strong> <span class="rain-standby-mentor"></span></p>
         <p style="margin-top: 6px;"><strong>Lời nhắn:</strong> <span class="rain-standby-msg"></span></p>
         <p style="margin-top: 6px;"><strong>Người gửi:</strong> <span class="rain-standby-sender"></span></p>
-        <p style="margin-top: 8px; font-size: 0.8rem; opacity: 0.85;">Đã lưu vào LocalStorage (${totalSaved} lá thư). Không gian mưa thư & Supabase sẽ mở ở Phase tiếp theo.</p>
+        <p class="rain-standby-sync" style="margin-top: 8px; font-size: 0.82rem; color: var(--color-warm-gold-bright);"></p>
+        <p class="rain-standby-approved-count" style="margin-top: 4px; font-size: 0.8rem; opacity: 0.85;">
+          Đã lưu tại máy: ${totalSaved} lá thư. Đang kiểm tra tổng lời cảm ơn đã duyệt...
+        </p>
       </div>
     `;
+
+    card.querySelector('.rain-standby-sync').textContent = syncStatusText;
 
     if (latest) {
       card.querySelector('.rain-standby-mentor').textContent = latest.mentorName;
@@ -97,6 +116,29 @@ export class UIManager {
         ? 'Anonymous (Ẩn danh)'
         : latest.senderName;
     }
+
+    const approvedCountEl = card.querySelector('.rain-standby-approved-count');
+
+    const refreshApprovedStats = async () => {
+      const result = await gratitudeService.getApprovedCount();
+      if (!section.isConnected) return;
+      if (result.fromCloud) {
+        approvedCountEl.textContent = `Tổng lời cảm ơn công khai đã duyệt trên Supabase: ${result.count} lá thư (Đã lưu tại máy: ${totalSaved}).`;
+      } else {
+        approvedCountEl.textContent = `Đã lưu tại máy: ${totalSaved} lá thư. Không gian bầu trời RAIN OF GRATITUDE sẽ hiển thị ở Phase 7.`;
+      }
+    };
+
+    refreshApprovedStats();
+
+    const unsubscribeRealtime = gratitudeService.subscribeToApprovedMessages({
+      onApprovedMessage: () => {
+        refreshApprovedStats();
+      },
+      onReconnectFallback: () => {
+        refreshApprovedStats();
+      },
+    });
 
     const writeAnotherBtn = document.createElement('button');
     writeAnotherBtn.type = 'button';
@@ -112,6 +154,9 @@ export class UIManager {
     return {
       element: section,
       destroy() {
+        if (typeof unsubscribeRealtime === 'function') {
+          unsubscribeRealtime();
+        }
         section.remove();
       },
     };

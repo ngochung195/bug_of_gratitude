@@ -1,6 +1,7 @@
 import gsap from 'gsap';
 import { APP_CONFIG, EVENTS, UI_SCREENS } from '../../config/constants.js';
 import { eventBus } from '../../core/EventBus.js';
+import { gratitudeService } from '../../services/GratitudeService.js';
 import { gratitudeStorage } from '../../services/GratitudeStorage.js';
 import { audioManager } from '../../systems/AudioManager.js';
 import { GratitudeValidator } from '../../systems/GratitudeValidator.js';
@@ -289,7 +290,7 @@ export function createGratitudeLetterScreen() {
 
   updatePreviewAndDraft();
 
-  formCard.addEventListener('submit', (event) => {
+  formCard.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (isSubmitting) return;
 
@@ -320,8 +321,15 @@ export function createGratitudeLetterScreen() {
     isSubmitting = true;
     sendBtn.setDisabled(true);
 
-    // Save to LocalStorage
-    const savedLetter = gratitudeStorage.saveLetter(creation.letter);
+    // Submit via GratitudeService (validates, saves local backup, and inserts into Supabase with is_approved = false)
+    const submitResult = await gratitudeService.submitGratitude({
+      mentorName: mentorInput.value,
+      senderName: senderInput.value,
+      message: messageInput.value,
+      isAnonymous: anonCheckbox.checked,
+    });
+
+    const savedLetter = submitResult.letter || creation.letter;
     audioManager.playWarmChime();
 
     // Animate closing letter & flying up into Rain of Gratitude
@@ -329,13 +337,20 @@ export function createGratitudeLetterScreen() {
 
     const tl = gsap.timeline({
       onComplete: () => {
+        const statusNotice = submitResult.syncedToCloud
+          ? `Đã gửi lời cảm ơn tới ${savedLetter.mentorName} lên hệ thống (đang chờ duyệt công khai)!`
+          : `Đã lưu lời cảm ơn tới ${savedLetter.mentorName}! Đang tiến vào RAIN OF GRATITUDE...`;
+
         notification.show({
-          message: `Đã gửi lời cảm ơn tới ${savedLetter.mentorName}! Đang tiến vào RAIN OF GRATITUDE...`,
+          message: statusNotice,
           type: 'warm',
-          duration: 4000,
+          duration: 4200,
         });
         eventBus.emit(EVENTS.GRATITUDE_SUBMITTED, {
           letter: savedLetter,
+          syncedToCloud: submitResult.syncedToCloud,
+          pendingModeration: submitResult.pendingModeration,
+          cloudError: submitResult.error,
           nextScreen: UI_SCREENS.RAIN_OF_GRATITUDE,
         });
       },
@@ -379,3 +394,4 @@ export function createGratitudeLetterScreen() {
     },
   };
 }
+

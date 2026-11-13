@@ -94,3 +94,4 @@ export class GratitudeValidator {
 }
 
 export default GratitudeValidator;
+

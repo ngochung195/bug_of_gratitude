@@ -1,5 +1,19 @@
 import { APP_CONFIG } from '../config/constants.js';
 
+function getLocalStorage() {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage;
+    }
+    if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
+      return globalThis.localStorage;
+    }
+  } catch {
+    // Ignore storage access errors
+  }
+  return null;
+}
+
 export class GratitudeStorage {
   constructor(
     storageKey = APP_CONFIG.GRATITUDE_STORAGE_KEY,
@@ -11,7 +25,9 @@ export class GratitudeStorage {
 
   getAllLetters() {
     try {
-      const raw = window.localStorage.getItem(this.storageKey);
+      const storage = getLocalStorage();
+      if (!storage) return [];
+      const raw = storage.getItem(this.storageKey);
       if (!raw) return [];
       const parsed = JSON.parse(raw);
       return Array.isArray(parsed) ? parsed : [];
@@ -25,27 +41,76 @@ export class GratitudeStorage {
     return letters.length > 0 ? letters[0] : null;
   }
 
+  getUnsyncedLetters() {
+    return this.getAllLetters().filter(
+      (item) => item && typeof item === 'object' && item.isSynced !== true
+    );
+  }
+
   saveLetter(letterObject) {
     if (!letterObject || typeof letterObject !== 'object') {
       return null;
     }
 
-    const existing = this.getAllLetters();
-    const updated = [letterObject, ...existing];
+    const normalizedLetter = {
+      ...letterObject,
+      isSynced: Boolean(letterObject.isSynced),
+      syncedAt: letterObject.syncedAt || null,
+    };
+
+    const existing = this.getAllLetters().filter((item) => item?.id !== normalizedLetter.id);
+    const updated = [normalizedLetter, ...existing];
 
     try {
-      window.localStorage.setItem(this.storageKey, JSON.stringify(updated));
+      const storage = getLocalStorage();
+      if (storage) {
+        storage.setItem(this.storageKey, JSON.stringify(updated));
+      }
       this.clearDraft();
     } catch {
       // Ignore storage quota restrictions
     }
 
-    return letterObject;
+    return normalizedLetter;
+  }
+
+  markLetterSynced(letterId, extraFields = {}) {
+    if (!letterId) return false;
+
+    const existing = this.getAllLetters();
+    let found = false;
+
+    const updated = existing.map((item) => {
+      if (item && item.id === letterId) {
+        found = true;
+        return {
+          ...item,
+          ...extraFields,
+          isSynced: true,
+          syncedAt: extraFields.syncedAt || new Date().toISOString(),
+        };
+      }
+      return item;
+    });
+
+    if (!found) return false;
+
+    try {
+      const storage = getLocalStorage();
+      if (storage) {
+        storage.setItem(this.storageKey, JSON.stringify(updated));
+      }
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   saveDraft(draft = {}) {
     try {
-      window.localStorage.setItem(
+      const storage = getLocalStorage();
+      if (!storage) return;
+      storage.setItem(
         this.draftKey,
         JSON.stringify({
           mentorName: String(draft.mentorName ?? ''),
@@ -61,7 +126,16 @@ export class GratitudeStorage {
 
   loadDraft() {
     try {
-      const raw = window.localStorage.getItem(this.draftKey);
+      const storage = getLocalStorage();
+      if (!storage) {
+        return {
+          mentorName: '',
+          senderName: '',
+          message: '',
+          isAnonymous: false,
+        };
+      }
+      const raw = storage.getItem(this.draftKey);
       if (!raw) {
         return {
           mentorName: '',
@@ -89,7 +163,10 @@ export class GratitudeStorage {
 
   clearDraft() {
     try {
-      window.localStorage.removeItem(this.draftKey);
+      const storage = getLocalStorage();
+      if (storage) {
+        storage.removeItem(this.draftKey);
+      }
     } catch {
       // Ignore
     }
