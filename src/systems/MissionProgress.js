@@ -85,3 +85,4 @@ export class MissionProgress {
 
 export const missionProgress = new MissionProgress();
 export default MissionProgress;
+

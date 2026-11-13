@@ -81,6 +81,26 @@ export class AudioManager {
       this.playTone({ freq: 180, duration: 0.14, type: 'sawtooth', volume: 0.045 });
     }, 95);
   }
+
+  playCriticalAlert() {
+    this.playTone({ freq: 196, duration: 0.18, type: 'sawtooth', volume: 0.055 });
+    window.setTimeout(() => {
+      this.playTone({ freq: 146.83, duration: 0.22, type: 'sawtooth', volume: 0.06 });
+    }, 200);
+    window.setTimeout(() => {
+      this.playTone({ freq: 196, duration: 0.18, type: 'sawtooth', volume: 0.055 });
+    }, 440);
+  }
+
+  playWarmChime() {
+    this.playTone({ freq: 440, duration: 0.18, type: 'sine', volume: 0.045 });
+    window.setTimeout(() => {
+      this.playTone({ freq: 554.37, duration: 0.22, type: 'sine', volume: 0.045 });
+    }, 140);
+    window.setTimeout(() => {
+      this.playTone({ freq: 659.25, duration: 0.35, type: 'sine', volume: 0.05 });
+    }, 290);
+  }
 }
 
 export const audioManager = new AudioManager();

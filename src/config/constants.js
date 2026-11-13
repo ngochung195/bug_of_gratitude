@@ -12,6 +12,8 @@ export const UI_SCREENS = {
   INTRO: 'intro',
   LOADING: 'loading',
   GAME_SHELL: 'game_shell',
+  LAST_BUG: 'last_bug',
+  GRATITUDE_LETTER: 'gratitude_letter',
 };
 
 export const SCENE_KEYS = {
@@ -50,4 +52,6 @@ export const EVENTS = {
   MISSION_COMPLETED: 'mission:completed',
   MISSION_PROGRESS_RESET: 'mission:progress_reset',
   ALL_MISSIONS_COMPLETED: 'ALL_MISSIONS_COMPLETED',
+  LAST_BUG_TRIGGERED: 'last_bug:triggered',
+  FIX_LAST_BUG_REQUESTED: 'last_bug:fix_requested',
 };

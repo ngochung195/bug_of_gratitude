@@ -1,0 +1,244 @@
+/* =========================================
+   PHASE 4: THE LAST BUG - MISSING GRATITUDE
+   ========================================= */
+
+@keyframes cyberGlitchShift {
+  0% {
+    transform: translate(0, 0) skew(0deg);
+    filter: hue-rotate(0deg);
+  }
+  20% {
+    transform: translate(-5px, 2px) skew(-2deg);
+    filter: drop-shadow(3px 0 0 rgba(244, 63, 94, 0.7)) drop-shadow(-3px 0 0 rgba(0, 229, 255, 0.7));
+  }
+  40% {
+    transform: translate(5px, -2px) skew(2deg);
+  }
+  60% {
+    transform: translate(-3px, 1px) skew(-1deg);
+  }
+  80% {
+    transform: translate(3px, -1px) skew(1deg);
+  }
+  100% {
+    transform: translate(0, 0) skew(0deg);
+    filter: hue-rotate(0deg);
+  }
+}
+
+.last-bug-screen {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background: rgba(3, 5, 11, 0.96);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  overflow-y: auto;
+  transition: background 900ms ease;
+}
+
+.last-bug-screen.is-glitching {
+  animation: cyberGlitchShift 0.36s steps(2, end) infinite;
+}
+
+.last-bug-screen.is-warm-mode {
+  background:
+    radial-gradient(circle at 50% 35%, rgba(251, 191, 36, 0.25), transparent 55%),
+    radial-gradient(circle at 50% 75%, rgba(245, 158, 11, 0.18), transparent 65%),
+    linear-gradient(180deg, #16120b 0%, #0f1424 100%);
+}
+
+.last-bug-skip-bar {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 5;
+}
+
+.last-bug-container {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Terminal Window */
+.last-bug-terminal {
+  background: rgba(8, 11, 22, 0.95);
+  border: 2px solid var(--color-cyber-pink);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-pixel), var(--glow-pink);
+  overflow: hidden;
+  transition:
+    border-color 600ms ease,
+    box-shadow 600ms ease;
+}
+
+.last-bug-screen.is-warm-mode .last-bug-terminal {
+  border-color: var(--color-warm-gold-bright);
+  box-shadow: var(--shadow-pixel), var(--glow-warm);
+}
+
+.last-bug-terminal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: rgba(244, 63, 94, 0.18);
+  border-bottom: 1px solid rgba(244, 63, 94, 0.45);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: #fecdd3;
+  letter-spacing: 0.06em;
+}
+
+.last-bug-terminal__alert-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-pixel);
+  font-size: 0.78rem;
+  color: var(--color-cyber-pink);
+}
+
+.last-bug-terminal__alert-title svg {
+  width: 18px;
+  height: 18px;
+}
+
+.last-bug-terminal__body {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.last-bug-code-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: clamp(0.85rem, 1.5vw, 0.98rem);
+  padding: var(--space-4);
+  background: rgba(4, 6, 14, 0.9);
+  border-left: 4px solid var(--color-cyber-pink);
+  border-radius: var(--radius-sm);
+}
+
+.last-bug-line {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.last-bug-line--critical {
+  color: var(--color-cyber-pink);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.last-bug-line--code {
+  font-family: var(--font-pixel);
+  font-size: clamp(0.95rem, 2vw, 1.25rem);
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(244, 63, 94, 0.65);
+  margin: 4px 0;
+}
+
+.last-bug-line--meta {
+  color: #fda4af;
+  font-size: 0.85rem;
+}
+
+.last-bug-line--narrative {
+  color: var(--color-electric-blue);
+  margin-top: 4px;
+}
+
+.last-bug-line--thankyou {
+  color: var(--color-warm-gold-bright);
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-shadow: 0 0 14px rgba(245, 158, 11, 0.45);
+}
+
+/* Vietnamese Emotional Message Card */
+.last-bug-message-vi {
+  opacity: 0;
+  transform: translateY(8px);
+  padding: var(--space-4) var(--space-5);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(139, 92, 246, 0.12));
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  border-radius: var(--radius-sm);
+  color: #fef3c7;
+  font-family: var(--font-sans);
+  font-size: clamp(0.95rem, 1.6vw, 1.05rem);
+  line-height: 1.7;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.last-bug-actions {
+  opacity: 0;
+  transform: translateY(8px);
+  display: flex;
+  justify-content: center;
+  padding-top: var(--space-2);
+}
+
+.last-bug-actions .bog-btn {
+  min-width: 240px;
+  font-size: 0.95rem;
+}
+
+/* Warm Letter Emergence View (After clicking FIX THIS BUG) */
+.last-bug-envelope-stage {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-4);
+}
+
+.last-bug-envelope-stage.is-active {
+  display: flex;
+}
+
+.last-bug-envelope-icon {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.18);
+  border: 2px solid var(--color-warm-gold-bright);
+  box-shadow: var(--glow-warm);
+  color: var(--color-warm-gold-bright);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: floatSlow 3s ease-in-out infinite;
+}
+
+.last-bug-envelope-icon svg {
+  width: 42px;
+  height: 42px;
+}
+
+.last-bug-envelope-title {
+  font-family: var(--font-pixel);
+  font-size: clamp(0.95rem, 2vw, 1.25rem);
+  color: var(--color-warm-gold-bright);
+  line-height: 1.5;
+}
+
+.last-bug-envelope-subtitle {
+  max-width: 520px;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  line-height: 1.65;
+}

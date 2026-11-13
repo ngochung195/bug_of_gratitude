@@ -14,11 +14,13 @@ export class GameScene extends Phaser.Scene {
     this.interactionSystem = null;
     this.obstaclesGroup = null;
     this.isPaused = false;
+    this.isLastBugLocked = false;
     this.unsubscribers = [];
   }
 
   create() {
     this.isPaused = false;
+    this.isLastBugLocked = false;
     this.physics.world.setBounds(
       LAB_BOUNDS.x,
       LAB_BOUNDS.y,
@@ -115,6 +117,7 @@ export class GameScene extends Phaser.Scene {
     this.cleanupBusListeners();
 
     const syncPauseState = (shouldPause) => {
+      if (this.isLastBugLocked) return;
       this.isPaused = Boolean(shouldPause);
       if (this.inputManager) {
         this.inputManager.setEnabled(!this.isPaused);
@@ -125,6 +128,21 @@ export class GameScene extends Phaser.Scene {
         this.physics.world.resume();
       }
     };
+
+    this.unsubscribers.push(
+      eventBus.on(EVENTS.ALL_MISSIONS_COMPLETED, () => {
+        if (this.isLastBugLocked) return;
+        this.isLastBugLocked = true;
+        this.isPaused = true;
+        if (this.inputManager) {
+          this.inputManager.setEnabled(false);
+        }
+        if (this.playerController && this.playerController.sprite?.body) {
+          this.playerController.sprite.body.setVelocity(0, 0);
+        }
+        this.physics.world.pause();
+      })
+    );
 
     this.unsubscribers.push(
       eventBus.on(EVENTS.GAME_PAUSE_TOGGLED, ({ paused }) => {
@@ -140,6 +158,7 @@ export class GameScene extends Phaser.Scene {
 
     this.unsubscribers.push(
       eventBus.on(EVENTS.GAME_RESTART_REQUESTED, () => {
+        this.isLastBugLocked = false;
         syncPauseState(false);
         if (this.playerController) {
           this.playerController.resetPosition();

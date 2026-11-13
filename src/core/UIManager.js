@@ -1,9 +1,12 @@
 import gsap from 'gsap';
 import { createGameShell } from '../components/screens/GameShell.js';
 import { createIntroScreen } from '../components/screens/IntroScreen.js';
+import { createLastBugScreen } from '../components/screens/LastBugScreen.js';
 import { createLoadingScreen } from '../components/screens/LoadingScreen.js';
 import { notification } from '../components/Notification.js';
 import { EVENTS, UI_SCREENS } from '../config/constants.js';
+import { lastBugController } from '../systems/LastBugController.js';
+import { missionManager } from '../systems/MissionManager.js';
 import { eventBus } from './EventBus.js';
 
 export class UIManager {
@@ -31,11 +34,16 @@ export class UIManager {
   }
 
   registerEvents() {
+    lastBugController.init(() => {
+      this.showScreen(UI_SCREENS.LAST_BUG);
+    });
+
     this.eventBus.on(EVENTS.GAME_START_REQUESTED, () => {
       this.showScreen(UI_SCREENS.LOADING);
     });
 
     this.eventBus.on(EVENTS.GAME_EXIT_REQUESTED, () => {
+      lastBugController.clearTimer();
       this.showScreen(UI_SCREENS.INTRO);
       notification.show({
         message: 'Đã thoát về màn hình chính.',
@@ -45,6 +53,14 @@ export class UIManager {
 
     this.eventBus.on(EVENTS.SOUND_TOGGLED, ({ enabled }) => {
       this.soundEnabled = enabled;
+    });
+
+    this.eventBus.on(EVENTS.FIX_LAST_BUG_REQUESTED, () => {
+      notification.show({
+        message: 'Sẵn sàng chuyển sang màn hình viết thư tri ân (Gratitude Letter - Phase 5).',
+        type: 'warm',
+        duration: 3600,
+      });
     });
   }
 
@@ -79,6 +95,8 @@ export class UIManager {
         nextInstance = createGameShell({
           soundEnabled: this.soundEnabled,
         });
+      } else if (screenKey === UI_SCREENS.LAST_BUG) {
+        nextInstance = createLastBugScreen();
       }
 
       if (!nextInstance) return;
@@ -95,6 +113,17 @@ export class UIManager {
 
       if (screenKey === UI_SCREENS.LOADING && typeof nextInstance.startSequence === 'function') {
         nextInstance.startSequence();
+      } else if (
+        screenKey === UI_SCREENS.LAST_BUG &&
+        typeof nextInstance.startSequence === 'function'
+      ) {
+        nextInstance.startSequence();
+      } else if (
+        screenKey === UI_SCREENS.GAME_SHELL &&
+        missionManager.isAllCompleted() &&
+        !lastBugController.hasTriggered
+      ) {
+        lastBugController.tryTrigger(650);
       }
 
       this.eventBus.emit(EVENTS.SCREEN_CHANGE, { screenKey });
@@ -115,4 +144,3 @@ export class UIManager {
 
 export const uiManager = new UIManager();
 export default UIManager;
-
