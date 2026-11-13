@@ -13,6 +13,14 @@ export const UI_SCREENS = {
   GAME_SHELL: 'game_shell',
 };
 
+export const SCENE_KEYS = {
+  BOOT: 'BootScene',
+  PRELOAD: 'PreloadScene',
+  MENU: 'MenuScene',
+  GAME: 'GameScene',
+  UI: 'UIScene',
+};
+
 export const EVENTS = {
   APP_READY: 'app:ready',
   SCENE_CHANGED: 'scene:changed',
@@ -23,4 +31,9 @@ export const EVENTS = {
   GAME_EXIT_REQUESTED: 'game:exit_requested',
   SOUND_TOGGLED: 'settings:sound_toggled',
   NOTIFY: 'ui:notify',
+  INTERACTION_TARGET_CHANGED: 'interaction:target_changed',
+  INTERACTION_TRIGGERED: 'interaction:triggered',
+  PLAYER_MOVED: 'player:moved',
+  MOBILE_INPUT_CHANGED: 'input:mobile_changed',
+  MOBILE_INTERACT_PRESSED: 'input:mobile_interact',
 };

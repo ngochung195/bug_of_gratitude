@@ -1,9 +1,16 @@
-import Phaser from 'phaser';
 import gsap from 'gsap';
-import { APP_CONFIG, EVENTS } from '../config/constants.js';
+import Phaser from 'phaser';
+import { APP_CONFIG, EVENTS, SCENE_KEYS, UI_SCREENS } from '../config/constants.js';
 import { createPhaserConfig } from '../config/phaserConfig.js';
+import { BootScene } from '../scenes/BootScene.js';
+import { GameScene } from '../scenes/GameScene.js';
+import { MenuScene } from '../scenes/MenuScene.js';
+import { PreloadScene } from '../scenes/PreloadScene.js';
+import { UIScene } from '../scenes/UIScene.js';
 import { eventBus } from './EventBus.js';
 import { sceneManager } from './SceneManager.js';
+
+const DEFAULT_SCENES = [BootScene, PreloadScene, MenuScene, GameScene, UIScene];
 
 export class GameManager {
   constructor({ eventBusInstance = eventBus, sceneManagerInstance = sceneManager } = {}) {
@@ -13,7 +20,7 @@ export class GameManager {
     this.isInitialized = false;
   }
 
-  init(scenes = []) {
+  init(scenes = DEFAULT_SCENES) {
     if (this.isInitialized) {
       return this.game;
     }
@@ -23,6 +30,8 @@ export class GameManager {
     this.sceneManager.bindGame(this.game);
     this.isInitialized = true;
 
+    this.registerScreenTransitions();
+
     this.eventBus.emit(EVENTS.APP_READY, {
       title: APP_CONFIG.TITLE,
       version: APP_CONFIG.VERSION,
@@ -31,6 +40,21 @@ export class GameManager {
     });
 
     return this.game;
+  }
+
+  registerScreenTransitions() {
+    this.eventBus.on(EVENTS.SCREEN_CHANGE, ({ screenKey }) => {
+      if (!this.game || !this.game.scene) return;
+
+      if (screenKey === UI_SCREENS.GAME_SHELL) {
+        this.sceneManager.startScene(SCENE_KEYS.GAME);
+      } else if (screenKey === UI_SCREENS.INTRO) {
+        if (this.game.scene.isActive(SCENE_KEYS.UI)) {
+          this.game.scene.stop(SCENE_KEYS.UI);
+        }
+        this.sceneManager.startScene(SCENE_KEYS.MENU);
+      }
+    });
   }
 
   destroy() {
@@ -44,4 +68,3 @@ export class GameManager {
 
 export const gameManager = new GameManager();
 export default GameManager;
-

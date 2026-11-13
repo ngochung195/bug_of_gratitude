@@ -1,0 +1,120 @@
+import Phaser from 'phaser';
+import { EVENTS } from '../config/constants.js';
+import { eventBus } from '../core/EventBus.js';
+import { audioManager } from './AudioManager.js';
+
+export class InteractionSystem {
+  constructor(scene, interactableConfigs = [], eventBusInstance = eventBus) {
+    this.scene = scene;
+    this.eventBus = eventBusInstance;
+    this.nodes = [];
+    this.activeTarget = null;
+
+    this.buildNodes(interactableConfigs);
+  }
+
+  buildNodes(configs) {
+    configs.forEach((cfg) => {
+      const baseCircle = this.scene.add.circle(cfg.x, cfg.y, cfg.radius, cfg.color, 0.08);
+      baseCircle.setStrokeStyle(1, cfg.color, 0.35);
+      baseCircle.setDepth(2);
+
+      const textureKey = cfg.type === 'npc' ? 'npc-mentor' : 'station-terminal';
+      const sprite = this.scene.physics.add.staticSprite(cfg.x, cfg.y, textureKey);
+      sprite.setDepth(4);
+      sprite.setTint(cfg.color);
+
+      const codeLabel = this.scene.add
+        .text(cfg.x, cfg.y - 34, cfg.code, {
+          fontFamily: 'Press Start 2P, monospace',
+          fontSize: '9px',
+          color: '#f8fafc',
+          backgroundColor: 'rgba(11, 16, 33, 0.85)',
+          padding: { x: 5, y: 3 },
+        })
+        .setOrigin(0.5)
+        .setDepth(6);
+
+      const promptBadge = this.scene.add
+        .text(cfg.x, cfg.y + 34, '[E] INTERACT', {
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: '11px',
+          fontStyle: 'bold',
+          color: '#070b14',
+          backgroundColor: '#00e5ff',
+          padding: { x: 6, y: 3 },
+        })
+        .setOrigin(0.5)
+        .setDepth(7)
+        .setVisible(false);
+
+      this.nodes.push({
+        config: cfg,
+        baseCircle,
+        sprite,
+        codeLabel,
+        promptBadge,
+      });
+    });
+  }
+
+  getStaticSprites() {
+    return this.nodes.map((node) => node.sprite);
+  }
+
+  update(playerPos) {
+    let closestNode = null;
+    let minDistance = Infinity;
+
+    this.nodes.forEach((node) => {
+      const dist = Phaser.Math.Distance.Between(
+        playerPos.x,
+        playerPos.y,
+        node.config.x,
+        node.config.y
+      );
+
+      if (dist <= node.config.radius && dist < minDistance) {
+        minDistance = dist;
+        closestNode = node;
+      }
+    });
+
+    const nextTarget = closestNode ? closestNode.config : null;
+    const prevId = this.activeTarget ? this.activeTarget.id : null;
+    const nextId = nextTarget ? nextTarget.id : null;
+
+    if (prevId !== nextId) {
+      this.nodes.forEach((node) => {
+        const isCurrent = closestNode === node;
+        node.promptBadge.setVisible(isCurrent);
+        node.baseCircle.setFillStyle(node.config.color, isCurrent ? 0.22 : 0.08);
+        node.baseCircle.setStrokeStyle(isCurrent ? 2 : 1, node.config.color, isCurrent ? 0.9 : 0.35);
+      });
+
+      this.activeTarget = nextTarget;
+
+      if (nextTarget) {
+        audioManager.playProximityEnter();
+      }
+
+      this.eventBus.emit(EVENTS.INTERACTION_TARGET_CHANGED, {
+        target: nextTarget,
+      });
+    }
+  }
+
+  tryInteract() {
+    if (!this.activeTarget) {
+      return false;
+    }
+
+    audioManager.playInteract();
+    this.eventBus.emit(EVENTS.INTERACTION_TRIGGERED, {
+      target: this.activeTarget,
+    });
+    return true;
+  }
+}
+
+export default InteractionSystem;

@@ -29,3 +29,4 @@ export function createLoadingIndicator({ text = 'INITIALIZING SYSTEM...' } = {})
     },
   };
 }
+

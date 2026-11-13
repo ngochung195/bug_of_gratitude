@@ -9,6 +9,7 @@ import { createProgressBar } from '../ProgressBar.js';
 
 export function createGameShell({ soundEnabled = true } = {}) {
   let isSoundOn = soundEnabled;
+  const unsubscribers = [];
 
   const shell = document.createElement('section');
   shell.className = 'game-shell';
@@ -75,34 +76,94 @@ export function createGameShell({ soundEnabled = true } = {}) {
     <span>CAM_FEED // 1280x720</span>
   `;
 
-  const centerPlaceholder = document.createElement('div');
-  centerPlaceholder.className = 'viewport-center-placeholder';
-  centerPlaceholder.innerHTML = `
-    <h2 class="viewport-center-placeholder__title">WORKSTATION VIEWPORT READY</h2>
-    <p class="viewport-center-placeholder__desc">
-      Khung giao diện Game Shell đã sẵn sàng. Nhân vật, bản đồ phòng Lab và 4 trạm sửa lỗi sẽ được kích hoạt ở các Phase tiếp theo.
-    </p>
-  `;
+  // Mobile Touch Controls (D-Pad + Interact/Pause)
+  const mobileControls = document.createElement('div');
+  mobileControls.className = 'mobile-controls';
+  mobileControls.setAttribute('aria-label', 'Mobile Game Controls');
+
+  const dpad = document.createElement('div');
+  dpad.className = 'mobile-dpad';
+
+  const createDpadButton = (dirLabel, modClass, dx, dy) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `mobile-dpad__btn ${modClass}`;
+    btn.textContent = dirLabel;
+    btn.setAttribute('aria-label', `Move ${dirLabel}`);
+
+    const startMove = (e) => {
+      e.preventDefault();
+      btn.classList.add('is-pressed');
+      eventBus.emit(EVENTS.MOBILE_INPUT_CHANGED, { x: dx, y: dy });
+    };
+
+    const stopMove = (e) => {
+      e.preventDefault();
+      btn.classList.remove('is-pressed');
+      eventBus.emit(EVENTS.MOBILE_INPUT_CHANGED, { x: 0, y: 0 });
+    };
+
+    btn.addEventListener('pointerdown', startMove);
+    btn.addEventListener('pointerup', stopMove);
+    btn.addEventListener('pointerleave', stopMove);
+    btn.addEventListener('pointercancel', stopMove);
+
+    return btn;
+  };
+
+  dpad.appendChild(createDpadButton('▲', 'mobile-dpad__btn--up', 0, -1));
+  dpad.appendChild(createDpadButton('◀', 'mobile-dpad__btn--left', -1, 0));
+  dpad.appendChild(createDpadButton('▶', 'mobile-dpad__btn--right', 1, 0));
+  dpad.appendChild(createDpadButton('▼', 'mobile-dpad__btn--down', 0, 1));
+
+  const mobileActions = document.createElement('div');
+  mobileActions.className = 'mobile-actions';
+
+  const mobileInteractBtn = createButton({
+    label: '[E] INTERACT',
+    variant: 'primary',
+    iconSvg: ICONS.TERMINAL,
+    disabled: true,
+    onClick: () => {
+      eventBus.emit(EVENTS.MOBILE_INTERACT_PRESSED);
+    },
+  });
+
+  const mobilePauseBtn = createButton({
+    label: 'PAUSE',
+    variant: 'ghost',
+    iconSvg: ICONS.PAUSE,
+  });
+
+  mobileActions.appendChild(mobileInteractBtn.element);
+  mobileActions.appendChild(mobilePauseBtn.element);
+
+  mobileControls.appendChild(dpad);
+  mobileControls.appendChild(mobileActions);
 
   const bottomCorners = document.createElement('div');
   bottomCorners.className = 'viewport-corners';
   bottomCorners.innerHTML = `
-    <span>SYS_STATUS: STANDBY</span>
+    <span>SYS_STATUS: ONLINE</span>
     <span>LATENCY: 4ms</span>
   `;
 
   viewportFrame.appendChild(topCorners);
-  viewportFrame.appendChild(centerPlaceholder);
+  viewportFrame.appendChild(mobileControls);
   viewportFrame.appendChild(bottomCorners);
 
   // 3. Bottom Interaction Hint Bar
   const bottomHud = document.createElement('footer');
   bottomHud.className = 'game-hud-bottom';
 
+  const DEFAULT_HINT_MESSAGE =
+    'Di chuyển bằng [WASD / Arrow Keys] • Tiến lại gần trạm Terminal hoặc Mentor Bot để kiểm tra.';
+  const DEFAULT_KEY_HINT = 'Press [E] to Interact • [ESC] Pause';
+
   const interactionDialog = createDialog({
     badge: 'INTERACTION HINT',
-    message: 'Di chuyển bằng [WASD / Arrow Keys] • Tiến lại gần trạm máy tính để kiểm tra Bug.',
-    keyHint: 'Press [E] to Interact • [ESC] Pause',
+    message: DEFAULT_HINT_MESSAGE,
+    keyHint: DEFAULT_KEY_HINT,
   });
   bottomHud.appendChild(interactionDialog.element);
 
@@ -150,6 +211,12 @@ export function createGameShell({ soundEnabled = true } = {}) {
     },
   });
 
+  const openPauseMenu = () => {
+    pauseBtn.setActive(true);
+    pauseModal.open();
+    eventBus.emit(EVENTS.GAME_PAUSE_TOGGLED, { paused: true });
+  };
+
   const syncSoundButtons = () => {
     const labelText = isSoundOn ? 'SOUND: ON' : 'SOUND: OFF';
     const icon = isSoundOn ? ICONS.VOLUME_ON : ICONS.VOLUME_OFF;
@@ -171,12 +238,8 @@ export function createGameShell({ soundEnabled = true } = {}) {
 
   hudSoundBtn.element.addEventListener('click', toggleSound);
   pauseSoundBtn.element.addEventListener('click', toggleSound);
-
-  pauseBtn.element.addEventListener('click', () => {
-    pauseBtn.setActive(true);
-    pauseModal.open();
-    eventBus.emit(EVENTS.GAME_PAUSE_TOGGLED, { paused: true });
-  });
+  pauseBtn.element.addEventListener('click', openPauseMenu);
+  mobilePauseBtn.element.addEventListener('click', openPauseMenu);
 
   resumeBtn.element.addEventListener('click', () => {
     pauseModal.close();
@@ -185,8 +248,13 @@ export function createGameShell({ soundEnabled = true } = {}) {
   restartBtn.element.addEventListener('click', () => {
     pauseModal.close();
     missionProgress.update(0, APP_CONFIG.TOTAL_MISSIONS);
+    interactionDialog.update({
+      newBadge: 'INTERACTION HINT',
+      newMessage: DEFAULT_HINT_MESSAGE,
+      newKeyHint: DEFAULT_KEY_HINT,
+    });
     notification.show({
-      message: 'Đã làm mới trạng thái phiên làm việc (Session Restarted).',
+      message: 'Đã đặt lại vị trí nhân vật và phiên làm việc (Session Restarted).',
       type: 'success',
     });
     eventBus.emit(EVENTS.GAME_RESTART_REQUESTED);
@@ -196,6 +264,42 @@ export function createGameShell({ soundEnabled = true } = {}) {
     pauseModal.close();
     eventBus.emit(EVENTS.GAME_EXIT_REQUESTED);
   });
+
+  // Listen to proximity target changes and interactions from Phaser InteractionSystem
+  unsubscribers.push(
+    eventBus.on(EVENTS.INTERACTION_TARGET_CHANGED, ({ target }) => {
+      if (target) {
+        mobileInteractBtn.setDisabled(false);
+        interactionDialog.update({
+          newBadge: target.code,
+          newMessage: target.hintMessage,
+          newKeyHint: 'Press [E] to Interact',
+        });
+      } else {
+        mobileInteractBtn.setDisabled(true);
+        interactionDialog.update({
+          newBadge: 'INTERACTION HINT',
+          newMessage: DEFAULT_HINT_MESSAGE,
+          newKeyHint: DEFAULT_KEY_HINT,
+        });
+      }
+    })
+  );
+
+  unsubscribers.push(
+    eventBus.on(EVENTS.INTERACTION_TRIGGERED, ({ target }) => {
+      if (!target) return;
+      interactionDialog.update({
+        newBadge: `${target.code} // CONNECTED`,
+        newMessage: target.triggerMessage,
+        newKeyHint: 'Press [E] Again',
+      });
+      notification.show({
+        message: target.triggerMessage,
+        type: target.type === 'npc' ? 'warm' : 'info',
+      });
+    })
+  );
 
   shell.appendChild(topHud);
   shell.appendChild(viewportFrame);
@@ -208,13 +312,13 @@ export function createGameShell({ soundEnabled = true } = {}) {
       if (pauseModal.isOpen()) {
         pauseModal.close();
       } else {
-        pauseBtn.setActive(true);
-        pauseModal.open();
-        eventBus.emit(EVENTS.GAME_PAUSE_TOGGLED, { paused: true });
+        openPauseMenu();
       }
     },
     isSoundEnabled: () => isSoundOn,
     destroy() {
+      unsubscribers.forEach((unsub) => unsub());
+      unsubscribers.length = 0;
       shell.remove();
     },
   };

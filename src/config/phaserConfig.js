@@ -8,6 +8,14 @@ export function createPhaserConfig(scenes = []) {
     width: APP_CONFIG.WIDTH,
     height: APP_CONFIG.HEIGHT,
     backgroundColor: APP_CONFIG.BACKGROUND_COLOR,
+    pixelArt: true,
+    physics: {
+      default: 'arcade',
+      arcade: {
+        gravity: { x: 0, y: 0 },
+        debug: false,
+      },
+    },
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -15,4 +23,3 @@ export function createPhaserConfig(scenes = []) {
     scene: scenes,
   };
 }
-

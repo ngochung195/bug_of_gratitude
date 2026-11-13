@@ -34,3 +34,4 @@ class NotificationManager {
 
 export const notification = new NotificationManager();
 export default NotificationManager;
+
