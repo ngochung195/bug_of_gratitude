@@ -29,7 +29,18 @@ export function createGameShell({ soundEnabled = true } = {}) {
       <span class="hud-player-status__dot"></span>
       <span>DEV_INTERN // ONLINE</span>
     </span>
+    <span class="hud-attempts-badge" title="Số cơ hội trả lời sai còn lại cho cả 4 câu">
+      CƠ HỘI: ${missionManager.getRemainingAttempts()}/${APP_CONFIG.MAX_WRONG_ATTEMPTS}
+    </span>
   `;
+  const hudAttemptsEl = brand.querySelector('.hud-attempts-badge');
+  const syncHudAttempts = () => {
+    if (!hudAttemptsEl) return;
+    const rem = missionManager.getRemainingAttempts();
+    hudAttemptsEl.textContent = `CƠ HỘI: ${rem}/${APP_CONFIG.MAX_WRONG_ATTEMPTS}`;
+    hudAttemptsEl.classList.toggle('hud-attempts-badge--danger', rem <= 1);
+  };
+  syncHudAttempts();
 
   const missionBox = document.createElement('div');
   missionBox.className = 'hud-mission-box';
@@ -278,6 +289,7 @@ export function createGameShell({ soundEnabled = true } = {}) {
   unsubscribers.push(
     eventBus.on(EVENTS.MISSION_UPDATED, ({ completedCount, totalCount }) => {
       missionProgress.update(completedCount, totalCount);
+      syncHudAttempts();
     })
   );
 

@@ -12,7 +12,10 @@ export class MissionProgress {
       statusById[mission.id] =
         index === 0 ? MISSION_STATUS.AVAILABLE : MISSION_STATUS.LOCKED;
     });
-    return statusById;
+    return {
+      statusById,
+      wrongAttempts: 0,
+    };
   }
 
   load() {
@@ -28,19 +31,24 @@ export class MissionProgress {
         return fallback;
       }
 
+      // Support both legacy flat status map and new { statusById, wrongAttempts } structure
+      const rawStatusMap =
+        parsed.statusById && typeof parsed.statusById === 'object'
+          ? parsed.statusById
+          : parsed;
+
       const validStatuses = new Set(Object.values(MISSION_STATUS));
-      const restored = {};
+      const restoredStatus = {};
 
       MISSIONS.forEach((mission, index) => {
-        const savedStatus = parsed[mission.id];
+        const savedStatus = rawStatusMap[mission.id];
         if (validStatuses.has(savedStatus)) {
-          // Normalize IN_PROGRESS back to AVAILABLE on reload if not completed yet
-          restored[mission.id] =
+          restoredStatus[mission.id] =
             savedStatus === MISSION_STATUS.IN_PROGRESS
               ? MISSION_STATUS.AVAILABLE
               : savedStatus;
         } else {
-          restored[mission.id] =
+          restoredStatus[mission.id] =
             index === 0 ? MISSION_STATUS.AVAILABLE : MISSION_STATUS.LOCKED;
         }
       });
@@ -48,29 +56,42 @@ export class MissionProgress {
       // Ensure sequential unlock integrity
       for (let i = 0; i < MISSIONS.length; i += 1) {
         const currentId = MISSIONS[i].id;
-        if (i === 0 && restored[currentId] === MISSION_STATUS.LOCKED) {
-          restored[currentId] = MISSION_STATUS.AVAILABLE;
+        if (i === 0 && restoredStatus[currentId] === MISSION_STATUS.LOCKED) {
+          restoredStatus[currentId] = MISSION_STATUS.AVAILABLE;
         }
         if (i > 0) {
           const prevId = MISSIONS[i - 1].id;
           if (
-            restored[prevId] === MISSION_STATUS.COMPLETED &&
-            restored[currentId] === MISSION_STATUS.LOCKED
+            restoredStatus[prevId] === MISSION_STATUS.COMPLETED &&
+            restoredStatus[currentId] === MISSION_STATUS.LOCKED
           ) {
-            restored[currentId] = MISSION_STATUS.AVAILABLE;
+            restoredStatus[currentId] = MISSION_STATUS.AVAILABLE;
           }
         }
       }
 
-      return restored;
+      const wrongAttempts = Number.isInteger(parsed.wrongAttempts)
+        ? Math.max(0, Math.min(APP_CONFIG.MAX_WRONG_ATTEMPTS, parsed.wrongAttempts))
+        : 0;
+
+      return {
+        statusById: restoredStatus,
+        wrongAttempts,
+      };
     } catch {
       return fallback;
     }
   }
 
-  save(statusById) {
+  save({ statusById, wrongAttempts = 0 }) {
     try {
-      window.localStorage.setItem(this.storageKey, JSON.stringify(statusById));
+      window.localStorage.setItem(
+        this.storageKey,
+        JSON.stringify({
+          statusById,
+          wrongAttempts,
+        })
+      );
     } catch {
       // Ignore storage quota or private mode restrictions
     }
@@ -85,4 +106,3 @@ export class MissionProgress {
 
 export const missionProgress = new MissionProgress();
 export default MissionProgress;
-

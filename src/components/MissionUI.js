@@ -1,4 +1,4 @@
-import { EVENTS, MISSION_STATUS } from '../config/constants.js';
+import { APP_CONFIG, EVENTS, MISSION_STATUS } from '../config/constants.js';
 import { eventBus } from '../core/EventBus.js';
 import { audioManager } from '../systems/AudioManager.js';
 import { missionManager } from '../systems/MissionManager.js';
@@ -11,8 +11,17 @@ export function createMissionUI() {
   let activeMission = null;
   let selectedOptionId = '';
   let quizAnswers = {};
+  let optionMap = new Map();
+  let patchInputElement = null;
 
   const bodyContainer = document.createElement('div');
+
+  const retryBtn = createButton({
+    label: 'LÀM LẠI CÂU NÀY',
+    variant: 'warm',
+    iconSvg: ICONS.ROTATE_CCW,
+  });
+  retryBtn.element.style.display = 'none';
 
   const submitBtn = createButton({
     label: 'VERIFY & PATCH',
@@ -28,7 +37,7 @@ export function createMissionUI() {
   const modal = createModal({
     title: 'TERMINAL DEBUGGER',
     content: bodyContainer,
-    footerButtons: [closeBtn, submitBtn],
+    footerButtons: [closeBtn, retryBtn, submitBtn],
     closeOnBackdrop: false,
     onClose: () => {
       if (activeMission && activeMission.status === MISSION_STATUS.IN_PROGRESS) {
@@ -45,6 +54,27 @@ export function createMissionUI() {
   closeBtn.element.addEventListener('click', () => {
     modal.close();
   });
+
+  const clearOptionMarkers = () => {
+    optionMap.forEach((btn) => {
+      btn.classList.remove('is-wrong', 'is-correct');
+      const oldTag = btn.querySelector('.mission-option__tag');
+      if (oldTag) oldTag.remove();
+    });
+  };
+
+  const markOptionBadge = (btn, type, text) => {
+    if (!btn) return;
+    btn.classList.remove('is-selected');
+    btn.classList.add(type === 'wrong' ? 'is-wrong' : 'is-correct');
+    const oldTag = btn.querySelector('.mission-option__tag');
+    if (oldTag) oldTag.remove();
+
+    const tag = document.createElement('span');
+    tag.className = `mission-option__tag mission-option__tag--${type}`;
+    tag.textContent = text;
+    btn.appendChild(tag);
+  };
 
   const renderCodeFixMission = (mission, feedbackBanner) => {
     // 1. Code Editor Box
@@ -104,22 +134,30 @@ export function createMissionUI() {
 
       optBtn.innerHTML = `
         <span class="mission-option__radio">${letter}</span>
-        <span></span>
+        <span class="mission-option__text"></span>
       `;
-      optBtn.querySelector('span:last-child').textContent = opt.label;
+      optBtn.querySelector('.mission-option__text').textContent = opt.label;
 
       if (mission.status === MISSION_STATUS.COMPLETED && opt.isCorrect) {
-        optBtn.classList.add('is-selected');
+        markOptionBadge(optBtn, 'correct', 'ĐÁP ÁN ĐÚNG');
       }
 
       optBtn.addEventListener('click', () => {
-        if (activeMission?.status === MISSION_STATUS.COMPLETED) return;
+        if (
+          activeMission?.status === MISSION_STATUS.COMPLETED ||
+          missionManager.isOutOfAttempts()
+        ) {
+          return;
+        }
         selectedOptionId = opt.id;
+        clearOptionMarkers();
         optionButtons.forEach((b) => b.classList.remove('is-selected'));
         optBtn.classList.add('is-selected');
         feedbackBanner.classList.remove('is-visible');
+        retryBtn.element.style.display = 'none';
       });
 
+      optionMap.set(opt.id, optBtn);
       optionButtons.push(optBtn);
       optionsWrap.appendChild(optBtn);
     });
@@ -141,11 +179,16 @@ export function createMissionUI() {
     textInput.id = inputId;
     textInput.className = 'mission-text-input';
     textInput.placeholder = mission.inputPlaceholder || 'Nhập câu lệnh sửa lỗi...';
-    textInput.disabled = mission.status === MISSION_STATUS.COMPLETED;
+    textInput.disabled =
+      mission.status === MISSION_STATUS.COMPLETED || missionManager.isOutOfAttempts();
 
     textInput.addEventListener('input', () => {
+      clearOptionMarkers();
       feedbackBanner.classList.remove('is-visible');
+      retryBtn.element.style.display = 'none';
     });
+
+    patchInputElement = textInput;
 
     inputGroup.appendChild(inputLabel);
     inputGroup.appendChild(textInput);
@@ -156,11 +199,18 @@ export function createMissionUI() {
         selectedOptionId,
         textInput: textInput.value,
       }),
+      resetSelection: () => {
+        selectedOptionId = '';
+        textInput.value = '';
+        clearOptionMarkers();
+        optionButtons.forEach((b) => b.classList.remove('is-selected'));
+      },
     };
   };
 
   const renderMentorQuizMission = (mission, feedbackBanner) => {
     quizAnswers = {};
+    const allGroupButtons = [];
 
     mission.questions.forEach((q, qIdx) => {
       const block = document.createElement('div');
@@ -188,23 +238,35 @@ export function createMissionUI() {
 
         optBtn.innerHTML = `
           <span class="mission-option__radio">${letter}</span>
-          <span></span>
+          <span class="mission-option__text"></span>
         `;
-        optBtn.querySelector('span:last-child').textContent = opt.label;
+        optBtn.querySelector('.mission-option__text').textContent = opt.label;
 
         if (mission.status === MISSION_STATUS.COMPLETED && opt.isCorrect) {
-          optBtn.classList.add('is-selected');
+          markOptionBadge(optBtn, 'correct', 'ĐÁP ÁN ĐÚNG');
         }
 
         optBtn.addEventListener('click', () => {
-          if (activeMission?.status === MISSION_STATUS.COMPLETED) return;
+          if (
+            activeMission?.status === MISSION_STATUS.COMPLETED ||
+            missionManager.isOutOfAttempts()
+          ) {
+            return;
+          }
           quizAnswers[q.id] = opt.id;
-          qOptionButtons.forEach((b) => b.classList.remove('is-selected'));
+          qOptionButtons.forEach((b) => {
+            b.classList.remove('is-selected', 'is-wrong');
+            const oldTag = b.querySelector('.mission-option__tag');
+            if (oldTag) oldTag.remove();
+          });
           optBtn.classList.add('is-selected');
           feedbackBanner.classList.remove('is-visible');
+          retryBtn.element.style.display = 'none';
         });
 
+        optionMap.set(opt.id, optBtn);
         qOptionButtons.push(optBtn);
+        allGroupButtons.push(optBtn);
         optionsWrap.appendChild(optBtn);
       });
 
@@ -218,10 +280,30 @@ export function createMissionUI() {
       getPayload: () => ({
         answers: quizAnswers,
       }),
+      resetSelection: () => {
+        quizAnswers = {};
+        clearOptionMarkers();
+        allGroupButtons.forEach((b) => b.classList.remove('is-selected'));
+      },
     };
   };
 
-  let currentPayloadGetter = () => ({});
+  let currentHandler = {
+    getPayload: () => ({}),
+    resetSelection: () => {},
+  };
+
+  const triggerGameResetFromExhaustedAttempts = () => {
+    modal.close();
+    missionManager.resetProgress();
+    eventBus.emit(EVENTS.GAME_RESTART_REQUESTED);
+    notification.show({
+      message:
+        'Đã reset trò chơi! Toàn bộ tiến trình trở về 0/4 và khôi phục 3/3 cơ hội trả lời.',
+      type: 'warm',
+      duration: 4000,
+    });
+  };
 
   const openMission = (missionId) => {
     const startResult = missionManager.startMission(missionId);
@@ -238,6 +320,9 @@ export function createMissionUI() {
     activeMission = mission;
     selectedOptionId = '';
     quizAnswers = {};
+    optionMap = new Map();
+    patchInputElement = null;
+    retryBtn.element.style.display = 'none';
 
     if (titleEl) {
       titleEl.textContent = `${mission.code} // ${mission.title}`;
@@ -245,17 +330,34 @@ export function createMissionUI() {
 
     bodyContainer.innerHTML = '';
 
-    // Meta bar
+    // Meta bar with Remaining Attempts counter
     const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
+    const remaining = missionManager.getRemainingAttempts();
+    const maxAttempts = APP_CONFIG.MAX_WRONG_ATTEMPTS;
+
     const metaBar = document.createElement('div');
     metaBar.className = 'mission-meta-bar';
     metaBar.innerHTML = `
       <span class="mission-meta-bar__topic">TOPIC: ${mission.topic}</span>
-      <span class="mission-meta-bar__status ${
-        isCompleted ? 'mission-meta-bar__status--completed' : ''
-      }">STATUS: ${mission.status}</span>
+      <div class="mission-meta-bar__badges">
+        <span class="mission-meta-bar__attempts ${
+          remaining <= 1 ? 'mission-meta-bar__attempts--danger' : ''
+        }">CƠ HỘI CÒN LẠI: ${remaining}/${maxAttempts}</span>
+        <span class="mission-meta-bar__status ${
+          isCompleted ? 'mission-meta-bar__status--completed' : ''
+        }">STATUS: ${mission.status}</span>
+      </div>
     `;
     bodyContainer.appendChild(metaBar);
+
+    const updateAttemptsBadge = () => {
+      const rem = missionManager.getRemainingAttempts();
+      const badge = metaBar.querySelector('.mission-meta-bar__attempts');
+      if (badge) {
+        badge.textContent = `CƠ HỘI CÒN LẠI: ${rem}/${maxAttempts}`;
+        badge.classList.toggle('mission-meta-bar__attempts--danger', rem <= 1);
+      }
+    };
 
     // Story description
     const storyEl = document.createElement('p');
@@ -263,18 +365,39 @@ export function createMissionUI() {
     storyEl.textContent = mission.story;
     bodyContainer.appendChild(storyEl);
 
-    // Feedback Banner
+    // Feedback Banner placed prominently above options & scrolled into view when triggered
     const feedbackBanner = document.createElement('div');
     feedbackBanner.className = 'mission-feedback';
     feedbackBanner.setAttribute('role', 'alert');
 
     if (mission.type === 'code-fix') {
-      const handler = renderCodeFixMission(mission, feedbackBanner);
-      currentPayloadGetter = handler.getPayload;
+      currentHandler = renderCodeFixMission(mission, feedbackBanner);
     } else {
-      const handler = renderMentorQuizMission(mission, feedbackBanner);
-      currentPayloadGetter = handler.getPayload;
+      currentHandler = renderMentorQuizMission(mission, feedbackBanner);
     }
+
+    bodyContainer.appendChild(feedbackBanner);
+
+    retryBtn.element.onclick = () => {
+      currentHandler.resetSelection();
+      feedbackBanner.classList.remove('is-visible');
+      retryBtn.element.style.display = 'none';
+    };
+
+    const applyOutOfAttemptsUI = (messageText) => {
+      feedbackBanner.className = 'mission-feedback mission-feedback--error is-visible';
+      feedbackBanner.textContent =
+        messageText ||
+        'HẾT CƠ HỘI THỬ LẠI (ĐÃ SAI 3/3 LẦN)! Bạn bắt buộc phải Reset trò chơi để làm lại từ Câu 1.';
+      retryBtn.element.style.display = 'none';
+      if (patchInputElement) {
+        patchInputElement.disabled = true;
+      }
+      submitBtn.setDisabled(false);
+      submitBtn.setContent('RESET TRÒ CHƠI', ICONS.ROTATE_CCW);
+      submitBtn.element.onclick = triggerGameResetFromExhaustedAttempts;
+      feedbackBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
 
     if (isCompleted) {
       feedbackBanner.className = 'mission-feedback mission-feedback--success is-visible';
@@ -282,57 +405,97 @@ export function createMissionUI() {
         'Nhiệm vụ này đã được hoàn thành. Bạn có thể xem lại nội dung hoặc đóng cửa sổ để tiếp tục.';
       submitBtn.setDisabled(true);
       submitBtn.setContent('PATCH APPLIED', ICONS.TERMINAL);
+    } else if (missionManager.isOutOfAttempts()) {
+      applyOutOfAttemptsUI();
     } else {
       submitBtn.setDisabled(false);
       submitBtn.setContent('VERIFY & PATCH', ICONS.TERMINAL);
     }
 
-    bodyContainer.appendChild(feedbackBanner);
+    if (!isCompleted && !missionManager.isOutOfAttempts()) {
+      submitBtn.element.onclick = () => {
+        if (!activeMission || activeMission.status === MISSION_STATUS.COMPLETED) {
+          return;
+        }
 
-    submitBtn.element.onclick = () => {
-      if (!activeMission || activeMission.status === MISSION_STATUS.COMPLETED) {
-        return;
-      }
+        const payload = currentHandler.getPayload();
+        const result = missionManager.submitMissionAnswer(activeMission.id, payload);
+        updateAttemptsBadge();
 
-      const payload = currentPayloadGetter();
-      const result = missionManager.submitMissionAnswer(activeMission.id, payload);
+        if (!result.isValid) {
+          audioManager.playError();
 
-      if (!result.isValid) {
-        audioManager.playError();
-        feedbackBanner.className = 'mission-feedback mission-feedback--error is-visible';
+          // Highlight wrong options in red with [ĐÁP ÁN SAI] tag
+          clearOptionMarkers();
+          if (Array.isArray(result.wrongOptionIds)) {
+            result.wrongOptionIds.forEach((wrongId) => {
+              const wrongBtn = optionMap.get(wrongId);
+              markOptionBadge(wrongBtn, 'wrong', 'ĐÁP ÁN SAI');
+            });
+          }
+
+          if (result.outOfAttempts) {
+            applyOutOfAttemptsUI(result.feedback);
+            notification.show({
+              message: 'Bạn đã sai đủ 3/3 lần! Hãy nhấn RESET TRÒ CHƠI để bắt đầu lại.',
+              type: 'warm',
+              duration: 4200,
+            });
+            return;
+          }
+
+          feedbackBanner.className = 'mission-feedback mission-feedback--error is-visible';
+          feedbackBanner.textContent = result.feedback;
+
+          if (!result.isEmptyInput) {
+            retryBtn.element.style.display = 'inline-flex';
+          }
+
+          feedbackBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          return;
+        }
+
+        audioManager.playSuccess();
+        activeMission = missionManager.getMissionById(activeMission.id);
+        retryBtn.element.style.display = 'none';
+
+        clearOptionMarkers();
+        if (activeMission.type === 'code-fix' && selectedOptionId) {
+          markOptionBadge(optionMap.get(selectedOptionId), 'correct', 'ĐÁP ÁN ĐÚNG');
+        } else if (activeMission.type === 'mentor-quiz') {
+          Object.values(quizAnswers).forEach((ansId) => {
+            markOptionBadge(optionMap.get(ansId), 'correct', 'ĐÁP ÁN ĐÚNG');
+          });
+        }
+
+        const statusBadge = metaBar.querySelector('.mission-meta-bar__status');
+        if (statusBadge) {
+          statusBadge.textContent = `STATUS: ${MISSION_STATUS.COMPLETED}`;
+          statusBadge.classList.add('mission-meta-bar__status--completed');
+        }
+
+        feedbackBanner.className = 'mission-feedback mission-feedback--success is-visible';
         feedbackBanner.textContent = result.feedback;
-        return;
-      }
+        submitBtn.setDisabled(true);
+        submitBtn.setContent('PATCH APPLIED', ICONS.TERMINAL);
+        feedbackBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-      audioManager.playSuccess();
-      activeMission = missionManager.getMissionById(activeMission.id);
-
-      const statusBadge = metaBar.querySelector('.mission-meta-bar__status');
-      if (statusBadge) {
-        statusBadge.textContent = `STATUS: ${MISSION_STATUS.COMPLETED}`;
-        statusBadge.classList.add('mission-meta-bar__status--completed');
-      }
-
-      feedbackBanner.className = 'mission-feedback mission-feedback--success is-visible';
-      feedbackBanner.textContent = result.feedback;
-      submitBtn.setDisabled(true);
-      submitBtn.setContent('PATCH APPLIED', ICONS.TERMINAL);
-
-      if (result.allCompleted) {
-        notification.show({
-          message:
-            'Hoàn thành 4/4 nhiệm vụ! Toàn bộ Bug kỹ thuật đã được xử lý (ALL_MISSIONS_COMPLETED).',
-          type: 'success',
-          duration: 3800,
-        });
-      } else if (result.unlockedNextMission) {
-        notification.show({
-          message: `Đã hoàn thành ${activeMission.code}! Mở khóa tiếp theo: ${result.unlockedNextMission.code} (${result.unlockedNextMission.title}).`,
-          type: 'success',
-          duration: 3400,
-        });
-      }
-    };
+        if (result.allCompleted) {
+          notification.show({
+            message:
+              'Hoàn thành 4/4 nhiệm vụ! Toàn bộ Bug kỹ thuật đã được xử lý (ALL_MISSIONS_COMPLETED).',
+            type: 'success',
+            duration: 3800,
+          });
+        } else if (result.unlockedNextMission) {
+          notification.show({
+            message: `Đã hoàn thành ${activeMission.code}! Mở khóa tiếp theo: ${result.unlockedNextMission.code} (${result.unlockedNextMission.title}).`,
+            type: 'success',
+            duration: 3400,
+          });
+        }
+      };
+    }
 
     modal.open();
     eventBus.emit(EVENTS.MISSION_MODAL_TOGGLED, { isOpen: true });
@@ -345,4 +508,3 @@ export function createMissionUI() {
     isOpen: () => modal.isOpen(),
   };
 }
-

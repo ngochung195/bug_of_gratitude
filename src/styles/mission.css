@@ -35,6 +35,28 @@
   font-weight: 700;
 }
 
+.mission-meta-bar__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.mission-meta-bar__attempts {
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.16);
+  color: var(--color-warm-gold-bright);
+  border: 1px solid rgba(251, 191, 36, 0.5);
+}
+
+.mission-meta-bar__attempts--danger {
+  background: rgba(239, 68, 68, 0.22);
+  color: #fecaca;
+  border-color: var(--color-danger);
+}
+
 .mission-meta-bar__status {
   padding: 2px 8px;
   border-radius: 3px;
@@ -138,7 +160,7 @@
     transform var(--transition-fast);
 }
 
-.mission-option:hover {
+.mission-option:hover:not(:disabled) {
   background: rgba(56, 189, 248, 0.12);
   border-color: var(--color-electric-blue);
 }
@@ -147,6 +169,19 @@
   background: rgba(139, 92, 246, 0.24);
   border-color: var(--color-electric-blue);
   box-shadow: var(--glow-blue);
+}
+
+.mission-option.is-wrong {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: var(--color-danger);
+  box-shadow: var(--glow-pink);
+  color: #fecaca;
+}
+
+.mission-option.is-correct {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: var(--color-success);
+  color: #a7f3d0;
 }
 
 .mission-option__radio {
@@ -166,6 +201,38 @@
 
 .mission-option.is-selected .mission-option__radio {
   background: var(--color-electric-blue);
+  color: #070b14;
+}
+
+.mission-option.is-wrong .mission-option__radio {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: #ffffff;
+}
+
+.mission-option.is-correct .mission-option__radio {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: #070b14;
+}
+
+.mission-option__tag {
+  margin-left: auto;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.mission-option__tag--wrong {
+  background: var(--color-danger);
+  color: #ffffff;
+}
+
+.mission-option__tag--correct {
+  background: var(--color-success);
   color: #070b14;
 }
 
@@ -221,6 +288,8 @@
 /* Feedback Banner */
 .mission-feedback {
   display: none;
+  flex-direction: column;
+  gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-sm);
   font-size: 0.88rem;
@@ -228,7 +297,13 @@
 }
 
 .mission-feedback.is-visible {
-  display: block;
+  display: flex;
+}
+
+.mission-feedback__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 .mission-feedback--error {
@@ -243,3 +318,22 @@
   color: #a7f3d0;
 }
 
+.hud-attempts-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(251, 191, 36, 0.48);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-warm-gold-bright);
+}
+
+.hud-attempts-badge--danger {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: var(--color-danger);
+  color: #fecaca;
+}

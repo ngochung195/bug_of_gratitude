@@ -70,3 +70,4 @@ export class LastBugController {
 
 export const lastBugController = new LastBugController();
 export default LastBugController;
+

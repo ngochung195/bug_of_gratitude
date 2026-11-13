@@ -5,6 +5,7 @@ export const APP_CONFIG = {
   HEIGHT: 720,
   BACKGROUND_COLOR: '#0B1021',
   TOTAL_MISSIONS: 4,
+  MAX_WRONG_ATTEMPTS: 3,
   STORAGE_KEY: 'bog_mission_progress_v1',
 };
 
@@ -50,6 +51,8 @@ export const EVENTS = {
   MISSION_MODAL_TOGGLED: 'mission:modal_toggled',
   MISSION_UPDATED: 'mission:updated',
   MISSION_COMPLETED: 'mission:completed',
+  MISSION_FAILED_ATTEMPT: 'mission:failed_attempt',
+  MISSION_OUT_OF_ATTEMPTS: 'mission:out_of_attempts',
   MISSION_PROGRESS_RESET: 'mission:progress_reset',
   ALL_MISSIONS_COMPLETED: 'ALL_MISSIONS_COMPLETED',
   LAST_BUG_TRIGGERED: 'last_bug:triggered',
