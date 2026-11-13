@@ -22,6 +22,7 @@ export const LAB_OBSTACLES = [
 export const INTERACTABLE_OBJECTS = [
   {
     id: 'mission-station-1',
+    missionId: 'mission-01',
     type: 'terminal',
     code: 'BUG #001',
     name: 'Trạm Terminal Alpha',
@@ -29,11 +30,11 @@ export const INTERACTABLE_OBJECTS = [
     y: 255,
     radius: 78,
     color: 0x00e5ff,
-    hintMessage: 'Trạm Terminal Alpha (BUG #001) — Nhấn [E] để kiểm tra hệ thống.',
-    triggerMessage: 'Đã kết nối Trạm Terminal Alpha (BUG #001). Nhiệm vụ sẽ mở ở Phase 3.',
+    hintMessage: 'MISSION 01: THE FIRST LOOP (BUG #001) — Nhấn [E] để mở Terminal xử lý lỗi.',
   },
   {
     id: 'mission-station-2',
+    missionId: 'mission-02',
     type: 'terminal',
     code: 'BUG #002',
     name: 'Trạm Terminal Beta',
@@ -41,11 +42,11 @@ export const INTERACTABLE_OBJECTS = [
     y: 255,
     radius: 78,
     color: 0x8b5cf6,
-    hintMessage: 'Trạm Terminal Beta (BUG #002) — Nhấn [E] để kiểm tra hệ thống.',
-    triggerMessage: 'Đã kết nối Trạm Terminal Beta (BUG #002). Nhiệm vụ sẽ mở ở Phase 3.',
+    hintMessage: 'MISSION 02: NULL NIGHTMARE (BUG #002) — Nhấn [E] để mở Terminal xử lý lỗi.',
   },
   {
     id: 'mission-station-3',
+    missionId: 'mission-03',
     type: 'terminal',
     code: 'BUG #003',
     name: 'Trạm Terminal Gamma',
@@ -53,11 +54,11 @@ export const INTERACTABLE_OBJECTS = [
     y: 445,
     radius: 78,
     color: 0xf43f5e,
-    hintMessage: 'Trạm Terminal Gamma (BUG #003) — Nhấn [E] để kiểm tra hệ thống.',
-    triggerMessage: 'Đã kết nối Trạm Terminal Gamma (BUG #003). Nhiệm vụ sẽ mở ở Phase 3.',
+    hintMessage: 'MISSION 03: INFINITE DEADLINE (BUG #003) — Nhấn [E] để mở Terminal xử lý lỗi.',
   },
   {
     id: 'mission-station-4',
+    missionId: 'mission-04',
     type: 'terminal',
     code: 'BUG #004',
     name: 'Trạm Terminal Delta',
@@ -65,8 +66,7 @@ export const INTERACTABLE_OBJECTS = [
     y: 445,
     radius: 78,
     color: 0x10b981,
-    hintMessage: 'Trạm Terminal Delta (BUG #004) — Nhấn [E] để kiểm tra hệ thống.',
-    triggerMessage: 'Đã kết nối Trạm Terminal Delta (BUG #004). Nhiệm vụ sẽ mở ở Phase 3.',
+    hintMessage: "MISSION 04: THE MENTOR'S VOICE (BUG #004) — Nhấn [E] để mở bài kiểm tra.",
   },
   {
     id: 'npc-mentor-bot',
@@ -77,8 +77,6 @@ export const INTERACTABLE_OBJECTS = [
     y: 165,
     radius: 82,
     color: 0xf59e0b,
-    hintMessage: 'Mentor Bot C-2011 — Nhấn [E] để trò chuyện hướng dẫn.',
-    triggerMessage:
-      'Mentor Bot C-2011: "Hãy di chuyển tới 4 trạm Terminal xung quanh phòng Lab để rà soát các Bug nhé!"',
+    hintMessage: 'Mentor Bot C-2011 — Nhấn [E] để nhận gợi ý nhiệm vụ hiện tại.',
   },
 ];

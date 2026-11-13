@@ -4,6 +4,7 @@ import './styles/global.css';
 import './styles/animations.css';
 import './styles/components.css';
 import './styles/screens.css';
+import './styles/mission.css';
 
 import { EVENTS } from './config/constants.js';
 import { eventBus } from './core/EventBus.js';

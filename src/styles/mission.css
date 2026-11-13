@@ -1,0 +1,244 @@
+/* =========================================
+   MISSION TERMINAL UI STYLES (Phase 3)
+   ========================================= */
+
+.bog-modal-backdrop--mission .bog-modal {
+  max-width: 740px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.bog-modal-backdrop--mission .bog-modal__body {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.mission-meta-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: rgba(7, 11, 20, 0.78);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.mission-meta-bar__topic {
+  color: var(--color-electric-blue);
+  font-weight: 700;
+}
+
+.mission-meta-bar__status {
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-weight: 700;
+  background: rgba(139, 92, 246, 0.2);
+  color: #ddd6fe;
+  border: 1px solid rgba(139, 92, 246, 0.5);
+}
+
+.mission-meta-bar__status--completed {
+  background: rgba(16, 185, 129, 0.2);
+  color: #a7f3d0;
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.mission-story {
+  color: var(--color-text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+/* Java Code Editor Block */
+.mission-code-box {
+  background: #060913;
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+}
+
+.mission-code-box__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: rgba(139, 92, 246, 0.14);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.mission-code-lines {
+  padding: var(--space-3) 0;
+  overflow-x: auto;
+}
+
+.mission-code-line {
+  display: flex;
+  align-items: baseline;
+  padding: 2px 12px;
+  white-space: pre;
+  color: #e2e8f0;
+}
+
+.mission-code-line--error {
+  background: rgba(244, 63, 94, 0.16);
+  border-left: 3px solid var(--color-cyber-pink);
+  color: #fecdd3;
+}
+
+.mission-code-line__num {
+  width: 28px;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  user-select: none;
+  font-size: 0.75rem;
+}
+
+/* Question & Options */
+.mission-question-label {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+}
+
+.mission-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.mission-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  background: rgba(17, 25, 48, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  line-height: 1.5;
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.mission-option:hover {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: var(--color-electric-blue);
+}
+
+.mission-option.is-selected {
+  background: rgba(139, 92, 246, 0.24);
+  border-color: var(--color-electric-blue);
+  box-shadow: var(--glow-blue);
+}
+
+.mission-option__radio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--color-electric-blue);
+  border-radius: 3px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-electric-blue);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.mission-option.is-selected .mission-option__radio {
+  background: var(--color-electric-blue);
+  color: #070b14;
+}
+
+/* Manual Code Patch Input */
+.mission-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mission-input-label {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
+}
+
+.mission-text-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: #060913;
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  border-radius: var(--radius-sm);
+  color: var(--color-electric-blue);
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+}
+
+.mission-text-input:focus {
+  outline: none;
+  border-color: var(--color-electric-blue);
+  box-shadow: var(--glow-blue);
+}
+
+/* Mentor Quiz Blocks (Mission 04) */
+.mission-quiz-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: rgba(7, 11, 20, 0.72);
+  border: 1px solid rgba(245, 158, 11, 0.38);
+  border-radius: var(--radius-sm);
+}
+
+.mission-quiz-quote {
+  font-style: italic;
+  color: #fef3c7;
+  padding-left: var(--space-3);
+  border-left: 3px solid var(--color-warm-gold-bright);
+  font-size: 0.94rem;
+}
+
+/* Feedback Banner */
+.mission-feedback {
+  display: none;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.mission-feedback.is-visible {
+  display: block;
+}
+
+.mission-feedback--error {
+  background: rgba(239, 68, 68, 0.16);
+  border: 1px solid var(--color-danger);
+  color: #fecaca;
+}
+
+.mission-feedback--success {
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid var(--color-success);
+  color: #a7f3d0;
+}

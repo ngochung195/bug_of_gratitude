@@ -1,8 +1,10 @@
 import { APP_CONFIG, EVENTS } from '../../config/constants.js';
 import { eventBus } from '../../core/EventBus.js';
+import { missionManager } from '../../systems/MissionManager.js';
 import { ICONS } from '../../utils/icons.js';
 import { createButton } from '../Button.js';
 import { createDialog } from '../Dialog.js';
+import { createMissionUI } from '../MissionUI.js';
 import { createModal } from '../Modal.js';
 import { notification } from '../Notification.js';
 import { createProgressBar } from '../ProgressBar.js';
@@ -34,7 +36,7 @@ export function createGameShell({ soundEnabled = true } = {}) {
 
   const missionProgress = createProgressBar({
     label: 'MISSION PROGRESS',
-    value: 0,
+    value: missionManager.getCompletedCount(),
     max: APP_CONFIG.TOTAL_MISSIONS,
     formatValue: (val, max) => `${val}/${max} BUGS FIXED`,
   });
@@ -167,7 +169,10 @@ export function createGameShell({ soundEnabled = true } = {}) {
   });
   bottomHud.appendChild(interactionDialog.element);
 
-  // 4. Pause Menu Modal (RESUME, RESTART, SOUND, EXIT)
+  // 4. Mission Terminal Modal UI
+  const missionUI = createMissionUI();
+
+  // 5. Pause Menu Modal (RESUME, RESTART, SOUND, EXIT)
   const pauseList = document.createElement('div');
   pauseList.className = 'pause-menu-list';
 
@@ -178,7 +183,7 @@ export function createGameShell({ soundEnabled = true } = {}) {
   });
 
   const restartBtn = createButton({
-    label: 'RESTART',
+    label: 'RESTART (RESET PROGRESS)',
     variant: 'secondary',
     iconSvg: ICONS.ROTATE_CCW,
   });
@@ -212,6 +217,10 @@ export function createGameShell({ soundEnabled = true } = {}) {
   });
 
   const openPauseMenu = () => {
+    if (missionUI.isOpen()) {
+      missionUI.close();
+      return;
+    }
     pauseBtn.setActive(true);
     pauseModal.open();
     eventBus.emit(EVENTS.GAME_PAUSE_TOGGLED, { paused: true });
@@ -247,14 +256,14 @@ export function createGameShell({ soundEnabled = true } = {}) {
 
   restartBtn.element.addEventListener('click', () => {
     pauseModal.close();
-    missionProgress.update(0, APP_CONFIG.TOTAL_MISSIONS);
+    missionManager.resetProgress();
     interactionDialog.update({
       newBadge: 'INTERACTION HINT',
       newMessage: DEFAULT_HINT_MESSAGE,
       newKeyHint: DEFAULT_KEY_HINT,
     });
     notification.show({
-      message: 'Đã đặt lại vị trí nhân vật và phiên làm việc (Session Restarted).',
+      message: 'Đã đặt lại toàn bộ tiến trình nhiệm vụ và vị trí nhân vật (Progress Reset).',
       type: 'success',
     });
     eventBus.emit(EVENTS.GAME_RESTART_REQUESTED);
@@ -265,13 +274,23 @@ export function createGameShell({ soundEnabled = true } = {}) {
     eventBus.emit(EVENTS.GAME_EXIT_REQUESTED);
   });
 
+  // Listen to Mission updates
+  unsubscribers.push(
+    eventBus.on(EVENTS.MISSION_UPDATED, ({ completedCount, totalCount }) => {
+      missionProgress.update(completedCount, totalCount);
+    })
+  );
+
   // Listen to proximity target changes and interactions from Phaser InteractionSystem
   unsubscribers.push(
     eventBus.on(EVENTS.INTERACTION_TARGET_CHANGED, ({ target }) => {
       if (target) {
         mobileInteractBtn.setDisabled(false);
+        const statusSuffix = target.missionId
+          ? ` [${missionManager.getMissionStatus(target.missionId)}]`
+          : '';
         interactionDialog.update({
-          newBadge: target.code,
+          newBadge: `${target.code}${statusSuffix}`,
           newMessage: target.hintMessage,
           newKeyHint: 'Press [E] to Interact',
         });
@@ -289,26 +308,41 @@ export function createGameShell({ soundEnabled = true } = {}) {
   unsubscribers.push(
     eventBus.on(EVENTS.INTERACTION_TRIGGERED, ({ target }) => {
       if (!target) return;
-      interactionDialog.update({
-        newBadge: `${target.code} // CONNECTED`,
-        newMessage: target.triggerMessage,
-        newKeyHint: 'Press [E] Again',
-      });
-      notification.show({
-        message: target.triggerMessage,
-        type: target.type === 'npc' ? 'warm' : 'info',
-      });
+
+      if (target.missionId) {
+        missionUI.openMission(target.missionId);
+        return;
+      }
+
+      if (target.type === 'npc') {
+        const guidance = missionManager.getMentorGuidance();
+        interactionDialog.update({
+          newBadge: `${target.code} // GUIDANCE`,
+          newMessage: guidance,
+          newKeyHint: 'Press [E] Again',
+        });
+        notification.show({
+          message: guidance,
+          type: 'warm',
+          duration: 3600,
+        });
+      }
     })
   );
 
   shell.appendChild(topHud);
   shell.appendChild(viewportFrame);
   shell.appendChild(bottomHud);
+  shell.appendChild(missionUI.element);
   shell.appendChild(pauseModal.element);
 
   return {
     element: shell,
     togglePauseMenu() {
+      if (missionUI.isOpen()) {
+        missionUI.close();
+        return;
+      }
       if (pauseModal.isOpen()) {
         pauseModal.close();
       } else {

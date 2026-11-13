@@ -1,10 +1,11 @@
 export const APP_CONFIG = {
-  TITLE: import.meta.env.VITE_APP_TITLE || 'BUG OF GRATITUDE',
-  VERSION: import.meta.env.VITE_APP_VERSION || '0.1.0',
+  TITLE: import.meta.env?.VITE_APP_TITLE || 'BUG OF GRATITUDE',
+  VERSION: import.meta.env?.VITE_APP_VERSION || '0.1.0',
   WIDTH: 1280,
   HEIGHT: 720,
   BACKGROUND_COLOR: '#0B1021',
   TOTAL_MISSIONS: 4,
+  STORAGE_KEY: 'bog_mission_progress_v1',
 };
 
 export const UI_SCREENS = {
@@ -19,6 +20,13 @@ export const SCENE_KEYS = {
   MENU: 'MenuScene',
   GAME: 'GameScene',
   UI: 'UIScene',
+};
+
+export const MISSION_STATUS = {
+  LOCKED: 'LOCKED',
+  AVAILABLE: 'AVAILABLE',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
 };
 
 export const EVENTS = {
@@ -36,4 +44,10 @@ export const EVENTS = {
   PLAYER_MOVED: 'player:moved',
   MOBILE_INPUT_CHANGED: 'input:mobile_changed',
   MOBILE_INTERACT_PRESSED: 'input:mobile_interact',
+  MISSION_OPEN_REQUESTED: 'mission:open_requested',
+  MISSION_MODAL_TOGGLED: 'mission:modal_toggled',
+  MISSION_UPDATED: 'mission:updated',
+  MISSION_COMPLETED: 'mission:completed',
+  MISSION_PROGRESS_RESET: 'mission:progress_reset',
+  ALL_MISSIONS_COMPLETED: 'ALL_MISSIONS_COMPLETED',
 };

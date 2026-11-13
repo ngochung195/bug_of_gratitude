@@ -64,7 +64,25 @@ export class AudioManager {
       this.playTone({ freq: 880, duration: 0.1, type: 'square', volume: 0.045 });
     }, 65);
   }
+
+  playSuccess() {
+    this.playTone({ freq: 523.25, duration: 0.09, type: 'triangle', volume: 0.05 });
+    window.setTimeout(() => {
+      this.playTone({ freq: 659.25, duration: 0.09, type: 'triangle', volume: 0.05 });
+    }, 85);
+    window.setTimeout(() => {
+      this.playTone({ freq: 783.99, duration: 0.16, type: 'triangle', volume: 0.055 });
+    }, 170);
+  }
+
+  playError() {
+    this.playTone({ freq: 240, duration: 0.11, type: 'sawtooth', volume: 0.045 });
+    window.setTimeout(() => {
+      this.playTone({ freq: 180, duration: 0.14, type: 'sawtooth', volume: 0.045 });
+    }, 95);
+  }
 }
 
 export const audioManager = new AudioManager();
 export default AudioManager;
+

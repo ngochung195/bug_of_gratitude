@@ -114,27 +114,33 @@ export class GameScene extends Phaser.Scene {
   registerBusListeners() {
     this.cleanupBusListeners();
 
+    const syncPauseState = (shouldPause) => {
+      this.isPaused = Boolean(shouldPause);
+      if (this.inputManager) {
+        this.inputManager.setEnabled(!this.isPaused);
+      }
+      if (this.isPaused) {
+        this.physics.world.pause();
+      } else {
+        this.physics.world.resume();
+      }
+    };
+
     this.unsubscribers.push(
       eventBus.on(EVENTS.GAME_PAUSE_TOGGLED, ({ paused }) => {
-        this.isPaused = Boolean(paused);
-        if (this.inputManager) {
-          this.inputManager.setEnabled(!this.isPaused);
-        }
-        if (this.isPaused) {
-          this.physics.world.pause();
-        } else {
-          this.physics.world.resume();
-        }
+        syncPauseState(paused);
+      })
+    );
+
+    this.unsubscribers.push(
+      eventBus.on(EVENTS.MISSION_MODAL_TOGGLED, ({ isOpen }) => {
+        syncPauseState(isOpen);
       })
     );
 
     this.unsubscribers.push(
       eventBus.on(EVENTS.GAME_RESTART_REQUESTED, () => {
-        this.isPaused = false;
-        this.physics.world.resume();
-        if (this.inputManager) {
-          this.inputManager.setEnabled(true);
-        }
+        syncPauseState(false);
         if (this.playerController) {
           this.playerController.resetPosition();
         }
@@ -151,6 +157,9 @@ export class GameScene extends Phaser.Scene {
     this.cleanupBusListeners();
     if (this.inputManager) {
       this.inputManager.destroy();
+    }
+    if (this.interactionSystem) {
+      this.interactionSystem.destroy();
     }
     if (this.scene.isActive(SCENE_KEYS.UI)) {
       this.scene.stop(SCENE_KEYS.UI);
@@ -175,3 +184,4 @@ export class GameScene extends Phaser.Scene {
 }
 
 export default GameScene;
+

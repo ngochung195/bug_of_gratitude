@@ -13,3 +13,4 @@ export class BootScene extends Phaser.Scene {
 }
 
 export default BootScene;
+
