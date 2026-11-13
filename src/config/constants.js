@@ -6,7 +6,10 @@ export const APP_CONFIG = {
   BACKGROUND_COLOR: '#0B1021',
   TOTAL_MISSIONS: 4,
   MAX_WRONG_ATTEMPTS: 3,
+  GRATITUDE_MAX_LENGTH: 300,
   STORAGE_KEY: 'bog_mission_progress_v1',
+  GRATITUDE_STORAGE_KEY: 'bog_gratitude_letters_v1',
+  GRATITUDE_DRAFT_KEY: 'bog_gratitude_draft_v1',
 };
 
 export const UI_SCREENS = {
@@ -15,6 +18,7 @@ export const UI_SCREENS = {
   GAME_SHELL: 'game_shell',
   LAST_BUG: 'last_bug',
   GRATITUDE_LETTER: 'gratitude_letter',
+  RAIN_OF_GRATITUDE: 'rain_of_gratitude',
 };
 
 export const SCENE_KEYS = {
@@ -57,4 +61,5 @@ export const EVENTS = {
   ALL_MISSIONS_COMPLETED: 'ALL_MISSIONS_COMPLETED',
   LAST_BUG_TRIGGERED: 'last_bug:triggered',
   FIX_LAST_BUG_REQUESTED: 'last_bug:fix_requested',
+  GRATITUDE_SUBMITTED: 'gratitude:submitted',
 };

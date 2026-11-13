@@ -1,10 +1,12 @@
 import gsap from 'gsap';
 import { createGameShell } from '../components/screens/GameShell.js';
+import { createGratitudeLetterScreen } from '../components/screens/GratitudeLetterScreen.js';
 import { createIntroScreen } from '../components/screens/IntroScreen.js';
 import { createLastBugScreen } from '../components/screens/LastBugScreen.js';
 import { createLoadingScreen } from '../components/screens/LoadingScreen.js';
 import { notification } from '../components/Notification.js';
 import { EVENTS, UI_SCREENS } from '../config/constants.js';
+import { gratitudeStorage } from '../services/GratitudeStorage.js';
 import { lastBugController } from '../systems/LastBugController.js';
 import { missionManager } from '../systems/MissionManager.js';
 import { eventBus } from './EventBus.js';
@@ -56,12 +58,63 @@ export class UIManager {
     });
 
     this.eventBus.on(EVENTS.FIX_LAST_BUG_REQUESTED, () => {
-      notification.show({
-        message: 'Sẵn sàng chuyển sang màn hình viết thư tri ân (Gratitude Letter - Phase 5).',
-        type: 'warm',
-        duration: 3600,
-      });
+      this.showScreen(UI_SCREENS.GRATITUDE_LETTER);
     });
+
+    this.eventBus.on(EVENTS.GRATITUDE_SUBMITTED, () => {
+      this.showScreen(UI_SCREENS.RAIN_OF_GRATITUDE);
+    });
+  }
+
+  createRainStandbyScreen() {
+    const latest = gratitudeStorage.getLatestLetter();
+    const totalSaved = gratitudeStorage.getAllLetters().length;
+
+    const section = document.createElement('section');
+    section.className = 'bog-screen gratitude-screen';
+    section.setAttribute('aria-label', 'Rain of Gratitude Standby');
+
+    const card = document.createElement('div');
+    card.className = 'bog-card intro-panel';
+    card.style.borderColor = 'var(--color-warm-gold-bright)';
+
+    card.innerHTML = `
+      <span class="gratitude-header__badge">RAIN OF GRATITUDE // STANDBY</span>
+      <h1 class="gratitude-header__title">THANK YOU FOR YOUR GRATITUDE</h1>
+      <p class="gratitude-header__quote">"BUG #005: MISSING GRATITUDE — STATUS: RESOLVED"</p>
+      <div class="about-highlight" style="width: 100%; text-align: left;">
+        <p><strong>Gửi tới:</strong> <span class="rain-standby-mentor"></span></p>
+        <p style="margin-top: 6px;"><strong>Lời nhắn:</strong> <span class="rain-standby-msg"></span></p>
+        <p style="margin-top: 6px;"><strong>Người gửi:</strong> <span class="rain-standby-sender"></span></p>
+        <p style="margin-top: 8px; font-size: 0.8rem; opacity: 0.85;">Đã lưu vào LocalStorage (${totalSaved} lá thư). Không gian mưa thư & Supabase sẽ mở ở Phase tiếp theo.</p>
+      </div>
+    `;
+
+    if (latest) {
+      card.querySelector('.rain-standby-mentor').textContent = latest.mentorName;
+      card.querySelector('.rain-standby-msg').textContent = latest.message;
+      card.querySelector('.rain-standby-sender').textContent = latest.isAnonymous
+        ? 'Anonymous (Ẩn danh)'
+        : latest.senderName;
+    }
+
+    const writeAnotherBtn = document.createElement('button');
+    writeAnotherBtn.type = 'button';
+    writeAnotherBtn.className = 'bog-btn bog-btn--warm';
+    writeAnotherBtn.textContent = 'VIẾT THÊM LÁ THƯ KHÁC';
+    writeAnotherBtn.addEventListener('click', () => {
+      this.showScreen(UI_SCREENS.GRATITUDE_LETTER);
+    });
+
+    card.appendChild(writeAnotherBtn);
+    section.appendChild(card);
+
+    return {
+      element: section,
+      destroy() {
+        section.remove();
+      },
+    };
   }
 
   handleKeyDown(event) {
@@ -97,6 +150,10 @@ export class UIManager {
         });
       } else if (screenKey === UI_SCREENS.LAST_BUG) {
         nextInstance = createLastBugScreen();
+      } else if (screenKey === UI_SCREENS.GRATITUDE_LETTER) {
+        nextInstance = createGratitudeLetterScreen();
+      } else if (screenKey === UI_SCREENS.RAIN_OF_GRATITUDE) {
+        nextInstance = this.createRainStandbyScreen();
       }
 
       if (!nextInstance) return;

@@ -6,6 +6,7 @@ import './styles/components.css';
 import './styles/screens.css';
 import './styles/mission.css';
 import './styles/lastBug.css';
+import './styles/gratitudeLetter.css';
 
 import { EVENTS } from './config/constants.js';
 import { eventBus } from './core/EventBus.js';

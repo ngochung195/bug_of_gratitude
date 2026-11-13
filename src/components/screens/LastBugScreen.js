@@ -98,7 +98,7 @@ export function createLastBugScreen() {
   `;
 
   const openLetterBtn = createButton({
-    label: 'VIẾT LỜI CẢM ƠN (PHASE 5)',
+    label: 'MỞ LÁ THƯ TRI ÂN',
     variant: 'warm',
     iconSvg: ICONS.MAIL_LETTER,
     onClick: () => {
