@@ -60,3 +60,4 @@ UPDATE public.gratitude_messages
 SET is_approved = true
 WHERE id = 'nhập-uuid-của-lời-cảm-ơn';
 ```
+

@@ -123,3 +123,4 @@ BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.gratitude_messages;
   END IF;
 END $$;
+

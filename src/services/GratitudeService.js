@@ -503,3 +503,4 @@ export class GratitudeService {
 
 export const gratitudeService = new GratitudeService();
 export default GratitudeService;
+

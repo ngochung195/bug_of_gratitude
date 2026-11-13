@@ -155,3 +155,4 @@ export function getSupabaseStatus() {
 }
 
 export default supabase;
+
