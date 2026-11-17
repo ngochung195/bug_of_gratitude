@@ -1,5 +1,7 @@
 import { APP_CONFIG, EVENTS } from '../../config/constants.js';
 import { eventBus } from '../../core/EventBus.js';
+import { SECTOR_STATUS } from '../../data/labEnvironment.js';
+import { investigationSystem } from '../../systems/InvestigationSystem.js';
 import { missionManager } from '../../systems/MissionManager.js';
 import { ICONS } from '../../utils/icons.js';
 import { createButton } from '../Button.js';
@@ -7,58 +9,111 @@ import { createDialog } from '../Dialog.js';
 import { createMissionUI } from '../MissionUI.js';
 import { createModal } from '../Modal.js';
 import { notification } from '../Notification.js';
-import { createProgressBar } from '../ProgressBar.js';
+
+function formatInGameClock(elapsedSec = 0) {
+  const baseMinutes = 23 * 60 + 47;
+  const totalSec = baseMinutes * 60 + elapsedSec;
+  const hours = Math.floor(totalSec / 3600) % 24;
+  const mins = Math.floor((totalSec % 3600) / 60);
+  const secs = totalSec % 60;
+  return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
 
 export function createGameShell({ soundEnabled = true } = {}) {
   let isSoundOn = soundEnabled;
+  let elapsedGameSeconds = 0;
   const unsubscribers = [];
 
   const shell = document.createElement('section');
   shell.className = 'game-shell';
-  shell.setAttribute('aria-label', 'Game Shell Interface');
+  shell.setAttribute('aria-label', 'CodeGym Headquarters Game Shell');
 
-  // 1. Top Navigation HUD
+  // =========================================================================
+  // 1. COMPACT TOP HUD BAR
+  // =========================================================================
   const topHud = document.createElement('header');
   topHud.className = 'game-hud-top';
 
   const brand = document.createElement('div');
   brand.className = 'hud-brand';
   brand.innerHTML = `
-    <span class="hud-brand__title">BUG OF GRATITUDE</span>
-    <span class="hud-player-status" title="Player Status">
+    <span class="hud-brand__title">CODEGYM HEADQUARTERS</span>
+    <span class="hud-player-status" title="System Status">
       <span class="hud-player-status__dot"></span>
-      <span>DEV_INTERN // ONLINE</span>
-    </span>
-    <span class="hud-attempts-badge" title="Số cơ hội trả lời sai còn lại cho cả 4 câu">
-      CƠ HỘI: ${missionManager.getRemainingAttempts()}/${APP_CONFIG.MAX_WRONG_ATTEMPTS}
+      <span class="hud-sys-status-text">SYSTEM STATUS: ${investigationSystem.getSystemStatusText()}</span>
     </span>
   `;
-  const hudAttemptsEl = brand.querySelector('.hud-attempts-badge');
-  const syncHudAttempts = () => {
-    if (!hudAttemptsEl) return;
-    const rem = missionManager.getRemainingAttempts();
-    hudAttemptsEl.textContent = `CƠ HỘI: ${rem}/${APP_CONFIG.MAX_WRONG_ATTEMPTS}`;
-    hudAttemptsEl.classList.toggle('hud-attempts-badge--danger', rem <= 1);
+  const sysStatusTextEl = brand.querySelector('.hud-sys-status-text');
+
+  // Telemetry Counters: Explored Sectors, Resolved Incidents, Remaining Attempts, In-Game Clock
+  const telemetryRow = document.createElement('div');
+  telemetryRow.style.cssText =
+    'display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-family: var(--font-mono); font-size: 0.75rem;';
+
+  const exploredBadge = document.createElement('span');
+  exploredBadge.className = 'hud-attempts-badge';
+  exploredBadge.style.borderColor = 'rgba(56, 189, 248, 0.45)';
+  exploredBadge.style.color = '#38bdf8';
+
+  const incidentsBadge = document.createElement('span');
+  incidentsBadge.className = 'hud-attempts-badge';
+  incidentsBadge.style.borderColor = 'rgba(16, 185, 129, 0.45)';
+  incidentsBadge.style.color = '#34d399';
+
+  const attemptsBadge = document.createElement('span');
+  attemptsBadge.className = 'hud-attempts-badge';
+
+  const clockBadge = document.createElement('span');
+  clockBadge.className = 'hud-attempts-badge';
+  clockBadge.style.borderColor = 'rgba(251, 191, 36, 0.45)';
+  clockBadge.style.color = '#fde047';
+  clockBadge.textContent = `TIME: ${formatInGameClock(0)}`;
+
+  telemetryRow.appendChild(exploredBadge);
+  telemetryRow.appendChild(incidentsBadge);
+  telemetryRow.appendChild(attemptsBadge);
+  telemetryRow.appendChild(clockBadge);
+
+  const syncHudTelemetry = () => {
+    const explored = investigationSystem.getExploredCount();
+    const totalSectors = investigationSystem.getTotalSectorsCount();
+    const resolved = investigationSystem.getResolvedIncidentsCount();
+    const totalIncidents = investigationSystem.getTotalIncidentsCount();
+    const remAttempts = missionManager.getRemainingAttempts();
+
+    exploredBadge.textContent = `KHU VỰC: ${explored}/${totalSectors}`;
+    incidentsBadge.textContent = `SỰ CỐ: ${resolved}/${totalIncidents}`;
+    attemptsBadge.textContent = `CƠ HỘI: ${remAttempts}/${APP_CONFIG.MAX_WRONG_ATTEMPTS}`;
+    attemptsBadge.classList.toggle('hud-attempts-badge--danger', remAttempts <= 1);
+
+    if (sysStatusTextEl) {
+      sysStatusTextEl.textContent = `SYSTEM: ${investigationSystem.getSystemStatusText()}`;
+    }
   };
-  syncHudAttempts();
+  syncHudTelemetry();
 
-  const missionBox = document.createElement('div');
-  missionBox.className = 'hud-mission-box';
+  // In-game night-shift clock timer
+  const clockInterval = window.setInterval(() => {
+    elapsedGameSeconds += 1;
+    clockBadge.textContent = `TIME: ${formatInGameClock(elapsedGameSeconds)}`;
+  }, 1000);
 
-  const missionProgress = createProgressBar({
-    label: 'MISSION PROGRESS',
-    value: missionManager.getCompletedCount(),
-    max: APP_CONFIG.TOTAL_MISSIONS,
-    formatValue: (val, max) => `${val}/${max} BUGS FIXED`,
-  });
-  missionBox.appendChild(missionProgress.element);
-
+  // Controls: Mission Log, Sound, Pause
   const controls = document.createElement('div');
   controls.className = 'hud-controls';
+
+  const missionLogBtn = createButton({
+    label: 'MISSION LOG',
+    variant: 'warm',
+    size: 'sm',
+    iconSvg: ICONS.TERMINAL,
+    ariaLabel: 'Open Mission & Sector Log',
+  });
 
   const hudSoundBtn = createButton({
     label: isSoundOn ? 'SOUND: ON' : 'SOUND: OFF',
     variant: 'ghost',
+    size: 'sm',
     iconSvg: isSoundOn ? ICONS.VOLUME_ON : ICONS.VOLUME_OFF,
     ariaLabel: 'Toggle Sound',
     active: isSoundOn,
@@ -67,29 +122,34 @@ export function createGameShell({ soundEnabled = true } = {}) {
   const pauseBtn = createButton({
     label: 'PAUSE',
     variant: 'secondary',
+    size: 'sm',
     iconSvg: ICONS.PAUSE,
     ariaLabel: 'Open Pause Menu',
   });
 
+  controls.appendChild(missionLogBtn.element);
   controls.appendChild(hudSoundBtn.element);
   controls.appendChild(pauseBtn.element);
 
   topHud.appendChild(brand);
-  topHud.appendChild(missionBox);
+  topHud.appendChild(telemetryRow);
   topHud.appendChild(controls);
 
-  // 2. Center Game Viewport Frame
+  // =========================================================================
+  // 2. CENTER GAME VIEWPORT FRAME & MOBILE D-PAD
+  // =========================================================================
   const viewportFrame = document.createElement('div');
   viewportFrame.className = 'game-viewport-frame';
 
   const topCorners = document.createElement('div');
   topCorners.className = 'viewport-corners';
   topCorners.innerHTML = `
-    <span>SECTOR // 01: CODEGYM LAB</span>
-    <span>CAM_FEED // 1280x720</span>
+    <span class="hud-current-sector-tag">SECTOR // RECEPTION (KHU VỰC LỄ TÂN)</span>
+    <span>WASD / ARROWS: MOVE • [E]: INTERACT • [ESC]: PAUSE</span>
   `;
+  const currentSectorTagEl = topCorners.querySelector('.hud-current-sector-tag');
 
-  // Mobile Touch Controls (D-Pad + Interact/Pause)
+  // Mobile Touch Controls
   const mobileControls = document.createElement('div');
   mobileControls.className = 'mobile-controls';
   mobileControls.setAttribute('aria-label', 'Mobile Game Controls');
@@ -154,36 +214,166 @@ export function createGameShell({ soundEnabled = true } = {}) {
   mobileControls.appendChild(dpad);
   mobileControls.appendChild(mobileActions);
 
-  const bottomCorners = document.createElement('div');
-  bottomCorners.className = 'viewport-corners';
-  bottomCorners.innerHTML = `
-    <span>SYS_STATUS: ONLINE</span>
-    <span>LATENCY: 4ms</span>
-  `;
-
   viewportFrame.appendChild(topCorners);
   viewportFrame.appendChild(mobileControls);
-  viewportFrame.appendChild(bottomCorners);
 
-  // 3. Bottom Interaction Hint Bar
+  // =========================================================================
+  // 3. BOTTOM INTERACTION HINT BAR
+  // =========================================================================
   const bottomHud = document.createElement('footer');
   bottomHud.className = 'game-hud-bottom';
 
   const DEFAULT_HINT_MESSAGE =
-    'Di chuyển bằng [WASD / Arrow Keys] • Tiến lại gần trạm Terminal hoặc Mentor Bot để kiểm tra.';
-  const DEFAULT_KEY_HINT = 'Press [E] to Interact • [ESC] Pause';
+    'Khám phá 6 phòng chức năng của CODEGYM HEADQUARTERS • Tiến lại gần vật thể hoặc Terminal để kiểm tra.';
+  const DEFAULT_KEY_HINT = 'Nhấn [E] để Kiểm tra • [ESC] Tạm dừng';
 
   const interactionDialog = createDialog({
-    badge: 'INTERACTION HINT',
+    badge: 'INVESTIGATION SCANNER',
     message: DEFAULT_HINT_MESSAGE,
     keyHint: DEFAULT_KEY_HINT,
   });
   bottomHud.appendChild(interactionDialog.element);
 
-  // 4. Mission Terminal Modal UI
+  // =========================================================================
+  // 4. MISSION TERMINAL MODAL UI
+  // =========================================================================
   const missionUI = createMissionUI();
 
-  // 5. Pause Menu Modal (RESUME, RESTART, SOUND, EXIT)
+  // =========================================================================
+  // 5. OBJECT INSPECTION MODAL (FOR COMPUTERS, SERVERS, CAMERAS, DESKS, CABINETS, NETWORK, DOORS)
+  // =========================================================================
+  const inspectionBody = document.createElement('div');
+  inspectionBody.className = 'about-list';
+
+  const closeInspectionBtn = createButton({
+    label: 'ĐÃ HIỂU [SPACE / ENTER]',
+    variant: 'primary',
+  });
+
+  const inspectionModal = createModal({
+    title: 'SCAN RESULT // KẾT QUẢ KIỂM TRA',
+    content: inspectionBody,
+    footerButtons: [closeInspectionBtn],
+    closeOnBackdrop: true,
+    onClose: () => {
+      eventBus.emit(EVENTS.GAME_PAUSE_TOGGLED, { paused: false });
+    },
+  });
+
+  closeInspectionBtn.element.addEventListener('click', () => {
+    inspectionModal.close();
+  });
+
+  const openInspectionModal = (target) => {
+    const titleEl = inspectionModal.element.querySelector('.bog-modal__title');
+    if (titleEl) {
+      titleEl.textContent = target.inspectionTitle || `KIỂM TRA // ${target.name}`;
+    }
+    inspectionBody.innerHTML = `
+      <div style="font-family: var(--font-mono); font-size: 0.76rem; color: var(--color-electric-blue); margin-bottom: 8px;">
+        PHÂN LOẠI VẬT THỂ: ${target.objectCategory || 'Thiết bị văn phòng'} • MÃ: ${target.code}
+      </div>
+      <div class="about-highlight" style="line-height: 1.65;">
+        ${target.inspectionText || target.hintMessage}
+      </div>
+    `;
+    inspectionModal.open();
+    eventBus.emit(EVENTS.GAME_PAUSE_TOGGLED, { paused: true });
+  };
+
+  // =========================================================================
+  // 6. MISSION LOG & SECTOR STATUS MODAL
+  // =========================================================================
+  const missionLogBody = document.createElement('div');
+  missionLogBody.className = 'about-list';
+
+  const closeMissionLogBtn = createButton({
+    label: 'ĐÓNG NHẬT KÝ',
+    variant: 'secondary',
+  });
+
+  const missionLogModal = createModal({
+    title: 'MISSION LOG // CODEGYM HEADQUARTERS',
+    content: missionLogBody,
+    footerButtons: [closeMissionLogBtn],
+    closeOnBackdrop: true,
+    onClose: () => {
+      eventBus.emit(EVENTS.GAME_PAUSE_TOGGLED, { paused: false });
+    },
+  });
+
+  closeMissionLogBtn.element.addEventListener('click', () => {
+    missionLogModal.close();
+  });
+
+  const renderMissionLogContent = () => {
+    const sectors = investigationSystem.getAllSectorsWithStatus();
+    const missions = missionManager.getAllMissions();
+
+    const sectorRowsHtml = sectors
+      .map((s) => {
+        const badgeColor =
+          s.status === SECTOR_STATUS.RESTORED
+            ? '#10b981'
+            : s.status === SECTOR_STATUS.ANOMALY_DETECTED
+              ? '#f43f5e'
+              : s.status === SECTOR_STATUS.EXPLORED
+                ? '#38bdf8'
+                : '#94a3b8';
+        return `
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 10px; background: rgba(15,23,42,0.75); border: 1px solid rgba(148,163,184,0.2); border-radius: 4px;">
+            <div>
+              <strong style="color: #fef3c7;">${s.name}</strong>
+              <span style="font-size: 0.8rem; color: var(--color-text-secondary);"> — ${s.viName}</span>
+            </div>
+            <span style="font-family: var(--font-mono); font-size: 0.74rem; font-weight: 700; color: ${badgeColor};">
+              [${s.statusLabel.toUpperCase()}]
+            </span>
+          </div>
+        `;
+      })
+      .join('');
+
+    const missionRowsHtml = missions
+      .map(
+        (m) => `
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 10px; background: rgba(7,11,20,0.65); border-left: 3px solid ${
+            m.status === 'COMPLETED' ? '#10b981' : '#fbbf24'
+          }; border-radius: 4px;">
+            <span><strong>${m.code}:</strong> ${m.title}</span>
+            <span style="font-family: var(--font-mono); font-size: 0.74rem; color: ${
+              m.status === 'COMPLETED' ? '#10b981' : '#38bdf8'
+            };">${m.status}</span>
+          </div>
+        `
+      )
+      .join('');
+
+    missionLogBody.innerHTML = `
+      <p style="font-size: 0.86rem; color: var(--color-text-secondary); margin-bottom: 8px;">
+        <strong>Trạng thái 6 Khu vực trong CODEGYM HEADQUARTERS:</strong>
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px;">
+        ${sectorRowsHtml}
+      </div>
+      <p style="font-size: 0.86rem; color: var(--color-text-secondary); margin-bottom: 8px;">
+        <strong>Danh sách Sự cố Hệ thống cần xử lý:</strong>
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        ${missionRowsHtml}
+      </div>
+    `;
+  };
+
+  missionLogBtn.element.addEventListener('click', () => {
+    renderMissionLogContent();
+    missionLogModal.open();
+    eventBus.emit(EVENTS.GAME_PAUSE_TOGGLED, { paused: true });
+  });
+
+  // =========================================================================
+  // 7. PAUSE MENU MODAL
+  // =========================================================================
   const pauseList = document.createElement('div');
   pauseList.className = 'pause-menu-list';
 
@@ -207,7 +397,7 @@ export function createGameShell({ soundEnabled = true } = {}) {
   });
 
   const exitBtn = createButton({
-    label: 'EXIT',
+    label: 'EXIT TO OPENING SCREEN',
     variant: 'danger',
     iconSvg: ICONS.LOG_OUT,
   });
@@ -232,6 +422,14 @@ export function createGameShell({ soundEnabled = true } = {}) {
       missionUI.close();
       return;
     }
+    if (inspectionModal.isOpen()) {
+      inspectionModal.close();
+      return;
+    }
+    if (missionLogModal.isOpen()) {
+      missionLogModal.close();
+      return;
+    }
     pauseBtn.setActive(true);
     pauseModal.open();
     eventBus.emit(EVENTS.GAME_PAUSE_TOGGLED, { paused: true });
@@ -251,7 +449,9 @@ export function createGameShell({ soundEnabled = true } = {}) {
     syncSoundButtons();
     eventBus.emit(EVENTS.SOUND_TOGGLED, { enabled: isSoundOn });
     notification.show({
-      message: isSoundOn ? 'Đã bật âm thanh hệ thống (Sound ON).' : 'Đã tắt âm thanh hệ thống (Sound OFF).',
+      message: isSoundOn
+        ? 'Đã bật âm thanh hệ thống (Sound ON).'
+        : 'Đã tắt âm thanh hệ thống (Sound OFF).',
       type: 'warm',
     });
   };
@@ -268,13 +468,15 @@ export function createGameShell({ soundEnabled = true } = {}) {
   restartBtn.element.addEventListener('click', () => {
     pauseModal.close();
     missionManager.resetProgress();
+    investigationSystem.reset();
+    syncHudTelemetry();
     interactionDialog.update({
-      newBadge: 'INTERACTION HINT',
+      newBadge: 'INVESTIGATION SCANNER',
       newMessage: DEFAULT_HINT_MESSAGE,
       newKeyHint: DEFAULT_KEY_HINT,
     });
     notification.show({
-      message: 'Đã đặt lại toàn bộ tiến trình nhiệm vụ và vị trí nhân vật (Progress Reset).',
+      message: 'Đã đặt lại tiến trình điều tra và vị trí nhân vật.',
       type: 'success',
     });
     eventBus.emit(EVENTS.GAME_RESTART_REQUESTED);
@@ -285,31 +487,57 @@ export function createGameShell({ soundEnabled = true } = {}) {
     eventBus.emit(EVENTS.GAME_EXIT_REQUESTED);
   });
 
-  // Listen to Mission updates
+  // Space / Enter closes the Inspection Modal when open
+  const handleShellKeyDown = (e) => {
+    if ((e.key === ' ' || e.key === 'Enter') && inspectionModal.isOpen()) {
+      e.preventDefault();
+      inspectionModal.close();
+    }
+  };
+  window.addEventListener('keydown', handleShellKeyDown);
+
+  // =========================================================================
+  // 8. EVENT BUS SUBSCRIPTIONS
+  // =========================================================================
   unsubscribers.push(
-    eventBus.on(EVENTS.MISSION_UPDATED, ({ completedCount, totalCount }) => {
-      missionProgress.update(completedCount, totalCount);
-      syncHudAttempts();
+    eventBus.on(EVENTS.MISSION_UPDATED, () => {
+      syncHudTelemetry();
     })
   );
 
-  // Listen to proximity target changes and interactions from Phaser InteractionSystem
+  unsubscribers.push(
+    eventBus.on(EVENTS.SECTOR_STATUS_UPDATED, () => {
+      syncHudTelemetry();
+    })
+  );
+
+  unsubscribers.push(
+    eventBus.on(EVENTS.SECTOR_CHANGED, ({ sector }) => {
+      if (sector && currentSectorTagEl) {
+        currentSectorTagEl.textContent = `SECTOR // ${sector.name} (${sector.viName.toUpperCase()})`;
+      }
+      syncHudTelemetry();
+    })
+  );
+
   unsubscribers.push(
     eventBus.on(EVENTS.INTERACTION_TARGET_CHANGED, ({ target }) => {
       if (target) {
         mobileInteractBtn.setDisabled(false);
         const statusSuffix = target.missionId
           ? ` [${missionManager.getMissionStatus(target.missionId)}]`
-          : '';
+          : target.objectCategory
+            ? ` [${target.objectCategory.toUpperCase()}]`
+            : '';
         interactionDialog.update({
           newBadge: `${target.code}${statusSuffix}`,
-          newMessage: target.hintMessage,
-          newKeyHint: 'Press [E] to Interact',
+          newMessage: `${target.name} — ${target.hintMessage}`,
+          newKeyHint: 'Nhấn [E] để Kiểm tra',
         });
       } else {
         mobileInteractBtn.setDisabled(true);
         interactionDialog.update({
-          newBadge: 'INTERACTION HINT',
+          newBadge: 'INVESTIGATION SCANNER',
           newMessage: DEFAULT_HINT_MESSAGE,
           newKeyHint: DEFAULT_KEY_HINT,
         });
@@ -326,12 +554,17 @@ export function createGameShell({ soundEnabled = true } = {}) {
         return;
       }
 
+      if (target.type === 'prop') {
+        openInspectionModal(target);
+        return;
+      }
+
       if (target.type === 'npc') {
         const guidance = missionManager.getMentorGuidance();
         interactionDialog.update({
           newBadge: `${target.code} // GUIDANCE`,
           newMessage: guidance,
-          newKeyHint: 'Press [E] Again',
+          newKeyHint: 'Nhấn [E] lần nữa',
         });
         notification.show({
           message: guidance,
@@ -346,6 +579,8 @@ export function createGameShell({ soundEnabled = true } = {}) {
   shell.appendChild(viewportFrame);
   shell.appendChild(bottomHud);
   shell.appendChild(missionUI.element);
+  shell.appendChild(inspectionModal.element);
+  shell.appendChild(missionLogModal.element);
   shell.appendChild(pauseModal.element);
 
   return {
@@ -353,6 +588,14 @@ export function createGameShell({ soundEnabled = true } = {}) {
     togglePauseMenu() {
       if (missionUI.isOpen()) {
         missionUI.close();
+        return;
+      }
+      if (inspectionModal.isOpen()) {
+        inspectionModal.close();
+        return;
+      }
+      if (missionLogModal.isOpen()) {
+        missionLogModal.close();
         return;
       }
       if (pauseModal.isOpen()) {
@@ -363,9 +606,13 @@ export function createGameShell({ soundEnabled = true } = {}) {
     },
     isSoundEnabled: () => isSoundOn,
     destroy() {
+      window.clearInterval(clockInterval);
+      window.removeEventListener('keydown', handleShellKeyDown);
       unsubscribers.forEach((unsub) => unsub());
       unsubscribers.length = 0;
       shell.remove();
     },
   };
 }
+
+export default createGameShell;

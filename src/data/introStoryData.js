@@ -82,3 +82,4 @@ export const CINEMATIC_SCENES = [
 ];
 
 export default CINEMATIC_SCENES;
+

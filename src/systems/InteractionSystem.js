@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { EVENTS, MISSION_STATUS } from '../config/constants.js';
 import { eventBus } from '../core/EventBus.js';
 import { audioManager } from './AudioManager.js';
+import { investigationSystem } from './InvestigationSystem.js';
 import { missionManager } from './MissionManager.js';
 
 export class InteractionSystem {
@@ -28,7 +29,13 @@ export class InteractionSystem {
       baseCircle.setStrokeStyle(1, cfg.color, 0.35);
       baseCircle.setDepth(2);
 
-      const textureKey = cfg.type === 'npc' ? 'npc-mentor' : 'station-terminal';
+      const textureKey =
+        cfg.type === 'npc'
+          ? 'npc-mentor'
+          : cfg.type === 'prop'
+            ? 'office-prop'
+            : 'station-terminal';
+
       const sprite = this.scene.physics.add.staticSprite(cfg.x, cfg.y, textureKey);
       sprite.setDepth(4);
       sprite.setTint(cfg.color);
@@ -36,37 +43,41 @@ export class InteractionSystem {
       const codeLabel = this.scene.add
         .text(cfg.x, cfg.y - 36, cfg.code, {
           fontFamily: 'Press Start 2P, monospace',
-          fontSize: '9px',
+          fontSize: '8px',
           color: '#f8fafc',
-          backgroundColor: 'rgba(11, 16, 33, 0.85)',
+          backgroundColor: 'rgba(11, 16, 33, 0.88)',
           padding: { x: 5, y: 3 },
         })
         .setOrigin(0.5)
         .setDepth(6);
 
       const statusLabel = this.scene.add
-        .text(cfg.x, cfg.y - 21, '', {
-          fontFamily: 'JetBrains Mono, monospace',
-          fontSize: '9px',
-          color: '#94a3b8',
-          backgroundColor: 'rgba(7, 11, 20, 0.85)',
-          padding: { x: 4, y: 1 },
-        })
+        .text(
+          cfg.x,
+          cfg.y - 21,
+          cfg.objectCategory ? `[${cfg.objectCategory.toUpperCase()}]` : '',
+          {
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: '9px',
+            color: '#cbd5e1',
+            backgroundColor: 'rgba(7, 11, 20, 0.85)',
+            padding: { x: 4, y: 1 },
+          }
+        )
         .setOrigin(0.5)
-        .setDepth(6)
-        .setVisible(Boolean(cfg.missionId));
+        .setDepth(6);
 
       const promptBadge = this.scene.add
-        .text(cfg.x, cfg.y + 34, '[E] INTERACT', {
+        .text(cfg.x, cfg.y + 32, `[E] ${cfg.name}`, {
           fontFamily: 'JetBrains Mono, monospace',
-          fontSize: '11px',
+          fontSize: '10px',
           fontStyle: 'bold',
           color: '#070b14',
           backgroundColor: '#00e5ff',
           padding: { x: 6, y: 3 },
         })
         .setOrigin(0.5)
-        .setDepth(7)
+        .setDepth(8)
         .setVisible(false);
 
       this.nodes.push({
@@ -82,7 +93,7 @@ export class InteractionSystem {
 
   syncMissionStates() {
     this.nodes.forEach((node) => {
-      const { missionId } = node.config;
+      const { missionId, name } = node.config;
       if (!missionId) return;
 
       const status = missionManager.getMissionStatus(missionId);
@@ -90,18 +101,18 @@ export class InteractionSystem {
 
       if (status === MISSION_STATUS.LOCKED) {
         node.statusLabel.setColor('#94a3b8');
-        node.sprite.setAlpha(0.5);
-        node.promptBadge.setText('[E] LOCKED');
+        node.sprite.setAlpha(0.55);
+        node.promptBadge.setText(`[E] KHÓA // ${name}`);
         node.promptBadge.setBackgroundColor('#64748b');
       } else if (status === MISSION_STATUS.COMPLETED) {
         node.statusLabel.setColor('#10b981');
         node.sprite.setAlpha(1);
-        node.promptBadge.setText('[E] REVIEW');
+        node.promptBadge.setText(`[E] ĐÃ KHÔI PHỤC // ${name}`);
         node.promptBadge.setBackgroundColor('#10b981');
       } else {
-        node.statusLabel.setColor('#00e5ff');
+        node.statusLabel.setColor('#fbbf24');
         node.sprite.setAlpha(1);
-        node.promptBadge.setText('[E] DEBUG');
+        node.promptBadge.setText(`[E] QUÉT & SỬA LỖI // ${name}`);
         node.promptBadge.setBackgroundColor('#00e5ff');
       }
     });
@@ -137,11 +148,11 @@ export class InteractionSystem {
       this.nodes.forEach((node) => {
         const isCurrent = closestNode === node;
         node.promptBadge.setVisible(isCurrent);
-        node.baseCircle.setFillStyle(node.config.color, isCurrent ? 0.22 : 0.08);
+        node.baseCircle.setFillStyle(node.config.color, isCurrent ? 0.24 : 0.08);
         node.baseCircle.setStrokeStyle(
           isCurrent ? 2 : 1,
           node.config.color,
-          isCurrent ? 0.9 : 0.35
+          isCurrent ? 0.92 : 0.35
         );
       });
 
@@ -163,6 +174,7 @@ export class InteractionSystem {
     }
 
     audioManager.playInteract();
+    investigationSystem.markObjectInspected(this.activeTarget);
     this.eventBus.emit(EVENTS.INTERACTION_TRIGGERED, {
       target: this.activeTarget,
     });

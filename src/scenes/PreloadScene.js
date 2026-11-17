@@ -208,6 +208,18 @@ export class PreloadScene extends Phaser.Scene {
     gNpc.fillRect(18, 29, 12, 3);
     gNpc.generateTexture('npc-mentor', 48, 48);
     gNpc.destroy();
+
+    // 6. Inspectable Office Prop Texture (40x40)
+    const gProp = this.make.graphics({ x: 0, y: 0, add: false });
+    gProp.fillStyle(0x0f172a, 1);
+    gProp.fillRoundedRect(6, 6, 28, 28, 5);
+    gProp.lineStyle(2, 0xffffff, 1);
+    gProp.strokeRoundedRect(6, 6, 28, 28, 5);
+    gProp.fillStyle(0xffffff, 0.9);
+    gProp.fillCircle(20, 16, 4);
+    gProp.fillRect(14, 23, 12, 4);
+    gProp.generateTexture('office-prop', 40, 40);
+    gProp.destroy();
   }
 
   registerPlayerAnimations() {
