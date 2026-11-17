@@ -6,6 +6,7 @@ const PALETTE = {
   purple: '#a855f7',
   pink: '#f43f5e',
   warmGold: '#fbbf24',
+  brightGold: '#fde047',
   white: '#f8fafc',
 };
 
@@ -33,6 +34,7 @@ export class RainCanvasEngine {
     // Pre-allocated object pools for high performance
     this.starPool = [];
     this.rainStreakPool = [];
+    this.charmPool = []; // Falling Hearts & Golden Stars
     this.bokehPool = [];
     this.particlePool = [];
     this.ripplePool = [];
@@ -70,6 +72,7 @@ export class RainCanvasEngine {
         maxStars: 24,
         maxParticles: 14,
         maxRainStreaks: 28,
+        maxCharms: 18,
         maxBokeh: 8,
         maxRipples: 6,
         maxBursts: 16,
@@ -82,6 +85,7 @@ export class RainCanvasEngine {
       maxStars: 48,
       maxParticles: 30,
       maxRainStreaks: 56,
+      maxCharms: 36,
       maxBokeh: 14,
       maxRipples: 10,
       maxBursts: 28,
@@ -102,7 +106,7 @@ export class RainCanvasEngine {
       baseAlpha: 0.32 + (i % 5) * 0.12,
       twinkleSpeed: 1.0 + (i % 4) * 0.55,
       phase: i * 1.17,
-      isDiamond: i % 5 === 0,
+      isDiamond: i % 4 === 0,
       color: STAR_COLORS[i % STAR_COLORS.length],
     }));
 
@@ -121,6 +125,30 @@ export class RainCanvasEngine {
           : i % 3 === 1
             ? '56, 189, 248'
             : '244, 114, 182',
+    }));
+
+    // Falling Hearts & Golden Stars in the Rain
+    this.charmPool = Array.from({ length: 36 }, (_, i) => ({
+      active: i < caps.maxCharms,
+      type: i % 2 === 0 ? 'star' : 'heart',
+      x: ((i * 0.61803398875 + 0.07) % 0.94) + 0.03,
+      y: (i * 0.2718281828) % 1,
+      vy: 0.065 + (i % 5) * 0.022,
+      swayAmp: 0.008 + (i % 3) * 0.004,
+      swaySpeed: 1.2 + (i % 4) * 0.35,
+      phase: i * 1.4,
+      rotation: (i * 0.7) % (Math.PI * 2),
+      rotationSpeed: (i % 2 === 0 ? 1 : -1) * (0.6 + (i % 3) * 0.35),
+      size: 6.5 + (i % 4) * 2.2,
+      alpha: 0.62 + (i % 4) * 0.1,
+      color:
+        i % 2 === 0
+          ? i % 4 === 0
+            ? PALETTE.brightGold
+            : PALETTE.warmGold
+          : i % 3 === 0
+            ? '#fb7185'
+            : PALETTE.pink,
     }));
 
     // Dreamy Bokeh Orbs
@@ -163,14 +191,15 @@ export class RainCanvasEngine {
       color: PALETTE.warmGold,
     }));
 
-    this.burstPool = Array.from({ length: 28 }, () => ({
+    this.burstPool = Array.from({ length: 28 }, (_, i) => ({
       active: false,
+      shape: i % 2 === 0 ? 'heart' : 'star',
       x: 0,
       y: 0,
       vx: 0,
       vy: 0,
       alpha: 0,
-      size: 2.5,
+      size: 5,
       color: PALETTE.warmGold,
     }));
 
@@ -246,6 +275,9 @@ export class RainCanvasEngine {
     });
     this.rainStreakPool.forEach((r, idx) => {
       r.active = idx < caps.maxRainStreaks;
+    });
+    this.charmPool.forEach((c, idx) => {
+      c.active = idx < caps.maxCharms;
     });
     this.bokehPool.forEach((b, idx) => {
       b.active = idx < caps.maxBokeh;
@@ -379,18 +411,15 @@ export class RainCanvasEngine {
         const angle = (Math.PI * 2 * spawned) / Math.min(14, caps.maxBursts);
         const speed = 48 + (spawned % 4) * 26;
         p.active = true;
+        p.shape = spawned % 2 === 0 ? 'heart' : 'star';
         p.x = targetNode.x;
         p.y = targetNode.y;
         p.vx = Math.cos(angle) * speed;
         p.vy = Math.sin(angle) * speed - 22;
         p.alpha = 1;
-        p.size = 2.6 + (spawned % 3) * 1.4;
+        p.size = 5 + (spawned % 3) * 1.8;
         p.color =
-          spawned % 3 === 0
-            ? PALETTE.warmGold
-            : spawned % 3 === 1
-              ? PALETTE.pink
-              : PALETTE.cyan;
+          spawned % 2 === 0 ? PALETTE.pink : PALETTE.brightGold;
         spawned += 1;
       }
     }
@@ -519,7 +548,22 @@ export class RainCanvasEngine {
       }
     }
 
-    // 2. Update Dreamy Bokeh Orbs
+    // 2. Update Falling Hearts & Golden Stars in the Rain
+    for (let i = 0; i < this.charmPool.length; i += 1) {
+      const c = this.charmPool[i];
+      if (!c.active) continue;
+
+      c.y += c.vy * dt;
+      c.x += Math.sin(this.elapsedTime * c.swaySpeed + c.phase) * c.swayAmp * dt;
+      c.rotation += c.rotationSpeed * dt;
+
+      if (c.y > 1.06) {
+        c.y = -0.06;
+        c.x = (c.x + 0.29) % 0.96 + 0.02;
+      }
+    }
+
+    // 3. Update Dreamy Bokeh Orbs
     for (let i = 0; i < this.bokehPool.length; i += 1) {
       const b = this.bokehPool[i];
       if (!b.active) continue;
@@ -531,7 +575,7 @@ export class RainCanvasEngine {
       if (b.x > 1.08) b.x = -0.08;
     }
 
-    // 3. Update Sparkle Particles
+    // 4. Update Sparkle Particles
     for (let i = 0; i < this.particlePool.length; i += 1) {
       const p = this.particlePool[i];
       if (!p.active) continue;
@@ -547,7 +591,7 @@ export class RainCanvasEngine {
       if (p.x > 1.02) p.x = -0.02;
     }
 
-    // 4. Update Shooting Stars / Meteors
+    // 5. Update Shooting Stars / Meteors
     const caps = this.getCaps();
     for (let i = 0; i < Math.min(this.meteorPool.length, caps.maxMeteors); i += 1) {
       const m = this.meteorPool[i];
@@ -571,11 +615,10 @@ export class RainCanvasEngine {
       }
     }
 
-    // 5. Update Falling Gratitude Letters ("Rơi như mưa thật")
+    // 6. Update Falling Gratitude Letters ("Rơi như mưa thật")
     for (let i = 0; i < this.letterNodes.length; i += 1) {
       const node = this.letterNodes[i];
 
-      // If newly submitted, first rise to top-center before joining the gentle rain
       if (node.entryProgress < 1) {
         node.entryProgress = Math.min(1, node.entryProgress + dt * 0.65);
         const targetY = node.yRatio * this.height;
@@ -585,7 +628,6 @@ export class RainCanvasEngine {
         continue;
       }
 
-      // Pause/slow down the hovered or selected letter so user can click it effortlessly
       const isHoveredOrSelected =
         this.hoveredNodeId === node.id || this.selectedNodeId === node.id;
       const speedFactor = isHoveredOrSelected ? 0.08 : 1;
@@ -593,14 +635,12 @@ export class RainCanvasEngine {
       node.y += node.fallSpeed * speedFactor * dt;
       node.yRatio = node.y / Math.max(1, this.height);
 
-      // Gentle horizontal wind sway & envelope flutter tilt
       const swayOffset =
         Math.sin(this.elapsedTime * node.swaySpeed + node.swayPhase) * node.swayAmp;
       node.x = node.xRatio * this.width + swayOffset;
       node.tiltAngle =
         Math.cos(this.elapsedTime * node.swaySpeed + node.swayPhase) * 0.12;
 
-      // When a falling letter reaches the lower sky, spawn a glowing ripple & loop back to top
       if (node.y > this.height - 68) {
         this.spawnRipple(
           node.x,
@@ -617,7 +657,7 @@ export class RainCanvasEngine {
       }
     }
 
-    // 6. Update Horizon Ripples
+    // 7. Update Horizon Ripples
     for (let i = 0; i < this.ripplePool.length; i += 1) {
       const rp = this.ripplePool[i];
       if (!rp.active) continue;
@@ -628,7 +668,7 @@ export class RainCanvasEngine {
       }
     }
 
-    // 7. Update Reaction Burst Particles
+    // 8. Update Reaction Burst Particles
     for (let i = 0; i < this.burstPool.length; i += 1) {
       const b = this.burstPool[i];
       if (!b.active) continue;
@@ -642,6 +682,80 @@ export class RainCanvasEngine {
         b.active = false;
       }
     }
+  }
+
+  /**
+   * Draws a 5-point Golden Star at (cx, cy).
+   */
+  drawGoldenStarShape(ctx, cx, cy, outerR, innerR, rotation = 0, fillColor = PALETTE.brightGold) {
+    ctx.fillStyle = fillColor;
+    ctx.beginPath();
+    const spikes = 5;
+    for (let i = 0; i < spikes * 2; i += 1) {
+      const r = i % 2 === 0 ? outerR : innerR;
+      const angle = rotation + (i * Math.PI) / spikes - Math.PI / 2;
+      const px = cx + Math.cos(angle) * r;
+      const py = cy + Math.sin(angle) * r;
+      if (i === 0) {
+        ctx.moveTo(px, py);
+      } else {
+        ctx.lineTo(px, py);
+      }
+    }
+    if (typeof ctx.closePath === 'function') {
+      ctx.closePath();
+    }
+    ctx.fill();
+  }
+
+  /**
+   * Draws a Heart shape at (cx, cy).
+   */
+  drawHeartShape(ctx, cx, cy, size, fillColor = PALETTE.pink) {
+    ctx.fillStyle = fillColor;
+    ctx.beginPath();
+    if (typeof ctx.bezierCurveTo === 'function') {
+      const topCurveHeight = size * 0.32;
+      const yTop = cy - size * 0.45;
+      ctx.moveTo(cx, yTop + topCurveHeight);
+      // Left lobe
+      ctx.bezierCurveTo(
+        cx,
+        yTop,
+        cx - size,
+        yTop,
+        cx - size,
+        yTop + topCurveHeight
+      );
+      ctx.bezierCurveTo(
+        cx - size,
+        yTop + (size + topCurveHeight) * 0.52,
+        cx,
+        yTop + (size + topCurveHeight) * 0.82,
+        cx,
+        yTop + size * 1.15
+      );
+      // Right lobe
+      ctx.bezierCurveTo(
+        cx,
+        yTop + (size + topCurveHeight) * 0.82,
+        cx + size,
+        yTop + (size + topCurveHeight) * 0.52,
+        cx + size,
+        yTop + topCurveHeight
+      );
+      ctx.bezierCurveTo(
+        cx + size,
+        yTop,
+        cx,
+        yTop,
+        cx,
+        yTop + topCurveHeight
+      );
+    } else {
+      ctx.arc(cx, cy, size * 0.6, 0, Math.PI * 2);
+    }
+    ctx.fill();
   }
 
   renderFrame() {
@@ -763,14 +877,55 @@ export class RainCanvasEngine {
         ctx.stroke();
 
         ctx.globalAlpha = m.alpha;
-        ctx.fillStyle = '#fef08a';
-        ctx.beginPath();
-        ctx.arc(headX, headY, 2.6, 0, Math.PI * 2);
-        ctx.fill();
+        this.drawGoldenStarShape(ctx, headX, headY, 5.5, 2.4, this.elapsedTime * 2, PALETTE.brightGold);
       }
     }
 
-    // 7. Falling Sparkle Motes
+    // 7. Falling Hearts & Golden Stars in the Rain (`charmPool`)
+    for (let i = 0; i < this.charmPool.length; i += 1) {
+      const c = this.charmPool[i];
+      if (!c.active) continue;
+
+      const cx = c.x * w;
+      const cy = c.y * h;
+      const pulseAlpha = this.reducedMotion
+        ? c.alpha
+        : c.alpha + Math.sin(this.elapsedTime * 2.5 + c.phase) * 0.18;
+
+      ctx.globalAlpha = Math.min(0.96, Math.max(0.22, pulseAlpha));
+
+      // Soft aura behind the falling heart or golden star
+      const glowR = c.size * 2.1;
+      const aura = ctx.createRadialGradient(cx, cy, 1, cx, cy, glowR);
+      if (c.type === 'star') {
+        aura.addColorStop(0, 'rgba(253, 224, 71, 0.45)');
+        aura.addColorStop(1, 'rgba(251, 191, 36, 0)');
+      } else {
+        aura.addColorStop(0, 'rgba(244, 63, 94, 0.42)');
+        aura.addColorStop(1, 'rgba(244, 63, 94, 0)');
+      }
+      ctx.fillStyle = aura;
+      ctx.beginPath();
+      ctx.arc(cx, cy, glowR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw either a 5-point Golden Star or a Glowing Heart
+      if (c.type === 'star') {
+        this.drawGoldenStarShape(
+          ctx,
+          cx,
+          cy,
+          c.size,
+          c.size * 0.44,
+          c.rotation,
+          c.color
+        );
+      } else {
+        this.drawHeartShape(ctx, cx, cy, c.size * 0.82, c.color);
+      }
+    }
+
+    // 8. Falling Sparkle Motes
     for (let i = 0; i < this.particlePool.length; i += 1) {
       const p = this.particlePool[i];
       if (!p.active) continue;
@@ -784,7 +939,7 @@ export class RainCanvasEngine {
 
     ctx.globalAlpha = 1;
 
-    // 8. Horizon Ripples when Letters Touch Down
+    // 9. Horizon Ripples when Letters Touch Down
     for (let i = 0; i < this.ripplePool.length; i += 1) {
       const rp = this.ripplePool[i];
       if (!rp.active || rp.alpha <= 0) continue;
@@ -803,22 +958,23 @@ export class RainCanvasEngine {
       ctx.restore();
     }
 
-    // 9. Falling Gratitude Letters with Luminous Comet Trails
+    // 10. Falling Gratitude Letters with Luminous Comet Trails, Golden Stars & Hearts
     for (let i = 0; i < this.letterNodes.length; i += 1) {
       const node = this.letterNodes[i];
       this.drawFallingLetterNode(ctx, node);
     }
 
-    // 10. Heart Burst Particles
+    // 11. Heart & Golden Star Burst Particles
     for (let i = 0; i < this.burstPool.length; i += 1) {
       const b = this.burstPool[i];
       if (!b.active) continue;
 
       ctx.globalAlpha = Math.max(0, b.alpha);
-      ctx.fillStyle = b.color;
-      ctx.beginPath();
-      ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
-      ctx.fill();
+      if (b.shape === 'star') {
+        this.drawGoldenStarShape(ctx, b.x, b.y, b.size, b.size * 0.45, this.elapsedTime * 3, b.color);
+      } else {
+        this.drawHeartShape(ctx, b.x, b.y, b.size * 0.85, b.color);
+      }
     }
 
     ctx.globalAlpha = 1;
@@ -860,12 +1016,23 @@ export class RainCanvasEngine {
     ctx.lineTo(x - node.tiltAngle * 35, y - trailLen);
     ctx.stroke();
 
-    // Small sparkling trail droplets above the envelope
-    ctx.fillStyle = isFeatured ? '#fef08a' : '#bae6fd';
-    ctx.beginPath();
-    ctx.arc(x - node.tiltAngle * 14, y - trailLen * 0.38, 1.8, 0, Math.PI * 2);
-    ctx.arc(x - node.tiltAngle * 26, y - trailLen * 0.72, 1.3, 0, Math.PI * 2);
-    ctx.fill();
+    // Accompanying Golden Star & Heart along the letter's trail
+    this.drawGoldenStarShape(
+      ctx,
+      x - node.tiltAngle * 15 - 9,
+      y - trailLen * 0.36,
+      isFeatured ? 5.5 : 4.2,
+      2.0,
+      this.elapsedTime * 1.6 + node.swayPhase,
+      PALETTE.brightGold
+    );
+    this.drawHeartShape(
+      ctx,
+      x - node.tiltAngle * 24 + 9,
+      y - trailLen * 0.62,
+      isFeatured ? 4.8 : 3.8,
+      '#fb7185'
+    );
 
     // 2. Multi-layered Luminous Halo Glow
     const haloRadius = (isFeatured ? 48 : 34) * pulse;
@@ -911,7 +1078,7 @@ export class RainCanvasEngine {
     ctx.lineTo(x, y + rayLen);
     ctx.stroke();
 
-    // 4. Glowing Tilted Envelope Icon
+    // 4. Glowing Envelope Icon
     const envW = isFeatured ? 34 : 28;
     const envH = isFeatured ? 22 : 18;
     const left = x - envW / 2;
@@ -941,11 +1108,8 @@ export class RainCanvasEngine {
     ctx.lineTo(left + envW, top);
     ctx.stroke();
 
-    // Wax Seal Dot at center of Envelope Flap
-    ctx.fillStyle = isFeatured ? '#f43f5e' : '#fbbf24';
-    ctx.beginPath();
-    ctx.arc(x, y + 2, 2.3, 0, Math.PI * 2);
-    ctx.fill();
+    // Wax Heart Seal at center of Envelope Flap
+    this.drawHeartShape(ctx, x, y + 2, 3.8, isFeatured ? '#f43f5e' : '#fbbf24');
 
     // 5. Mentor Short Label + Heart Count below/above the falling envelope
     const rawMentor = String(node.message?.mentorName || 'Mentor');
