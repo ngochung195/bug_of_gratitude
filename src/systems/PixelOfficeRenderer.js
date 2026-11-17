@@ -254,6 +254,7 @@ export class PixelOfficeRenderer {
     gWalls.setDepth(2);
 
     // Draw North Wall 3/4 Brick/Panel Elevation for each room so rooms have true 2.5D depth
+    // (Splitting around any North-wall doorway so the doorway looks visibly open)
     sectors.forEach((sec) => {
       const wallFaceH = 34;
       const isWarmBrick =
@@ -261,27 +262,45 @@ export class PixelOfficeRenderer {
         sec.id === 'sector-central-control' ||
         sec.id === 'sector-security-room';
 
-      // Top white wall cap (3D thickness)
-      gWalls.fillStyle(0xf1f5f9, 1);
-      gWalls.fillRect(sec.x, sec.y - 10, sec.width, 10);
-      gWalls.lineStyle(2, 0x1e1b2e, 1);
-      gWalls.strokeRect(sec.x, sec.y - 10, sec.width, 10);
+      const northDoor = doors.find(
+        (d) => d.sectorId === sec.id && d.width > d.height && Math.abs(d.y - sec.y) < 30
+      );
 
-      // Front wall face below the white cap
-      gWalls.fillStyle(isWarmBrick ? 0xb58863 : 0xd6d3cd, 1);
-      gWalls.fillRect(sec.x, sec.y, sec.width, wallFaceH);
+      const segments = northDoor
+        ? [
+            { x: sec.x, width: Math.max(0, northDoor.x - northDoor.width / 2 - sec.x) },
+            {
+              x: northDoor.x + northDoor.width / 2,
+              width: Math.max(0, sec.x + sec.width - (northDoor.x + northDoor.width / 2)),
+            },
+          ]
+        : [{ x: sec.x, width: sec.width }];
 
-      // Brick pattern or wainscoting lines on wall face
-      gWalls.lineStyle(1, isWarmBrick ? 0x8c6240 : 0xb5b1aa, 0.65);
-      for (let y = sec.y + 8; y < sec.y + wallFaceH; y += 8) {
-        gWalls.moveTo(sec.x, y);
-        gWalls.lineTo(sec.x + sec.width, y);
-      }
-      gWalls.strokePath();
+      segments.forEach((seg) => {
+        if (seg.width <= 0) return;
 
-      // Baseboard trim
-      gWalls.fillStyle(0x334155, 1);
-      gWalls.fillRect(sec.x, sec.y + wallFaceH - 4, sec.width, 4);
+        // Top white wall cap (3D thickness)
+        gWalls.fillStyle(0xf1f5f9, 1);
+        gWalls.fillRect(seg.x, sec.y - 10, seg.width, 10);
+        gWalls.lineStyle(2, 0x1e1b2e, 1);
+        gWalls.strokeRect(seg.x, sec.y - 10, seg.width, 10);
+
+        // Front wall face below the white cap
+        gWalls.fillStyle(isWarmBrick ? 0xb58863 : 0xd6d3cd, 1);
+        gWalls.fillRect(seg.x, sec.y, seg.width, wallFaceH);
+
+        // Brick pattern or wainscoting lines on wall face
+        gWalls.lineStyle(1, isWarmBrick ? 0x8c6240 : 0xb5b1aa, 0.65);
+        for (let y = sec.y + 8; y < sec.y + wallFaceH; y += 8) {
+          gWalls.moveTo(seg.x, y);
+          gWalls.lineTo(seg.x + seg.width, y);
+        }
+        gWalls.strokePath();
+
+        // Baseboard trim
+        gWalls.fillStyle(0x334155, 1);
+        gWalls.fillRect(seg.x, sec.y + wallFaceH - 4, seg.width, 4);
+      });
 
       // Room border outline
       gWalls.lineStyle(2, 0x1e293b, 0.95);
@@ -332,18 +351,18 @@ export class PixelOfficeRenderer {
       } else if (sec.id === 'sector-central-control') {
         this.drawWallMonitorChart(gDecor, sec.x + 150, sec.y + 4, 0x38bdf8);
         this.drawWallMonitorChart(gDecor, sec.x + 320, sec.y + 4, 0xf59e0b);
-        this.drawWaterCooler(gDecor, sec.x + 460, sec.y + 42);
+        this.drawWaterCooler(gDecor, sec.x + 455, sec.y + 42);
         this.drawPottedPlant(gDecor, sec.x + 48, sec.y + 52);
-        this.drawPottedPlant(gDecor, sec.x + 465, sec.y + 260);
+        this.drawPottedPlant(gDecor, sec.x + 448, sec.y + 328);
       } else if (sec.id === 'sector-security-room') {
-        this.drawWallWhiteboard(gDecor, sec.x + 175, sec.y + 4);
-        this.drawWallMonitorChart(gDecor, sec.x + 295, sec.y + 4, 0xf43f5e);
+        this.drawWallWhiteboard(gDecor, sec.x + 265, sec.y + 4);
+        this.drawWallMonitorChart(gDecor, sec.x + 355, sec.y + 4, 0xf43f5e);
         this.drawPottedPlant(gDecor, sec.x + 52, sec.y + 52);
         this.drawPottedPlant(gDecor, sec.x + 390, sec.y + 365);
       } else if (sec.id === 'sector-reception') {
-        this.drawPottedPlant(gDecor, sec.x + 48, sec.y + 56);
-        this.drawPottedPlant(gDecor, sec.x + 464, sec.y + 56);
-        this.drawWaterCooler(gDecor, sec.x + 464, sec.y + 135);
+        this.drawPottedPlant(gDecor, sec.x + 48, sec.y + 52);
+        this.drawPottedPlant(gDecor, sec.x + 448, sec.y + 52);
+        this.drawWaterCooler(gDecor, sec.x + 412, sec.y + 48);
       }
     });
   }

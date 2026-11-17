@@ -128,8 +128,11 @@ export const SECTORS = [
   },
 ];
 
-// Wide doorways (180px - 200px wide) for smooth, spacious entry into every room
+// Wide doorways for smooth, spacious entry into every room:
+// - RECEPTION & CENTRAL CONTROL ROOM: 1 main door + 2 side doors (West & East)
+// - IT OFFICE, DATABASE ROOM, SERVER ROOM, SECURITY ROOM: 1 main corridor door + 1 shared-walkway door
 export const ROOM_DOORS = [
+  // 1. RECEPTION (North main door + West & East side doors)
   {
     id: 'door-reception-north',
     sectorId: 'sector-reception',
@@ -137,8 +140,28 @@ export const ROOM_DOORS = [
     y: 673,
     width: 200,
     height: 18,
-    label: 'CỬA LỄ TÂN',
+    label: 'CỬA LỄ TÂN (BẮC)',
   },
+  {
+    id: 'door-reception-west',
+    sectorId: 'sector-reception',
+    x: 577,
+    y: 810,
+    width: 18,
+    height: 140,
+    label: 'CỬA LỄ TÂN (TÂY)',
+  },
+  {
+    id: 'door-reception-east',
+    sectorId: 'sector-reception',
+    x: 1055,
+    y: 810,
+    width: 18,
+    height: 140,
+    label: 'CỬA LỄ TÂN (ĐÔNG)',
+  },
+
+  // 2. CENTRAL CONTROL ROOM (South main door + West & East side doors)
   {
     id: 'door-central-south',
     sectorId: 'sector-central-control',
@@ -146,8 +169,28 @@ export const ROOM_DOORS = [
     y: 367,
     width: 200,
     height: 18,
-    label: 'CỬA ĐIỀU HÀNH',
+    label: 'CỬA ĐIỀU HÀNH (NAM)',
   },
+  {
+    id: 'door-central-west',
+    sectorId: 'sector-central-control',
+    x: 577,
+    y: 225,
+    width: 18,
+    height: 140,
+    label: 'CỬA ĐIỀU HÀNH (TÂY)',
+  },
+  {
+    id: 'door-central-east',
+    sectorId: 'sector-central-control',
+    x: 1055,
+    y: 225,
+    width: 18,
+    height: 140,
+    label: 'CỬA ĐIỀU HÀNH (ĐÔNG)',
+  },
+
+  // 3. IT OFFICE (East corridor door + South shared-walkway door)
   {
     id: 'door-it-east',
     sectorId: 'sector-it-office',
@@ -155,8 +198,19 @@ export const ROOM_DOORS = [
     y: 280,
     width: 18,
     height: 180,
-    label: 'CỬA IT OFFICE',
+    label: 'CỬA IT OFFICE (ĐÔNG)',
   },
+  {
+    id: 'door-it-south',
+    sectorId: 'sector-it-office',
+    x: 325,
+    y: 455,
+    width: 160,
+    height: 18,
+    label: 'CỬA IT OFFICE (NAM)',
+  },
+
+  // 4. DATABASE ROOM (West corridor door + South shared-walkway door)
   {
     id: 'door-db-west',
     sectorId: 'sector-database-room',
@@ -164,8 +218,19 @@ export const ROOM_DOORS = [
     y: 280,
     width: 18,
     height: 180,
-    label: 'CỬA DATABASE',
+    label: 'CỬA DATABASE (TÂY)',
   },
+  {
+    id: 'door-db-south',
+    sectorId: 'sector-database-room',
+    x: 1295,
+    y: 455,
+    width: 160,
+    height: 18,
+    label: 'CỬA DATABASE (NAM)',
+  },
+
+  // 5. SERVER ROOM (East corridor door + North shared-walkway door)
   {
     id: 'door-server-east',
     sectorId: 'sector-server-room',
@@ -173,8 +238,19 @@ export const ROOM_DOORS = [
     y: 784,
     width: 18,
     height: 180,
-    label: 'CỬA SERVER ROOM',
+    label: 'CỬA SERVER ROOM (ĐÔNG)',
   },
+  {
+    id: 'door-server-north',
+    sectorId: 'sector-server-room',
+    x: 325,
+    y: 585,
+    width: 160,
+    height: 18,
+    label: 'CỬA SERVER ROOM (BẮC)',
+  },
+
+  // 6. SECURITY ROOM (West corridor door + North shared-walkway door)
   {
     id: 'door-security-west',
     sectorId: 'sector-security-room',
@@ -182,91 +258,114 @@ export const ROOM_DOORS = [
     y: 784,
     width: 18,
     height: 180,
-    label: 'CỬA SECURITY ROOM',
+    label: 'CỬA SECURITY ROOM (TÂY)',
+  },
+  {
+    id: 'door-security-north',
+    sectorId: 'sector-security-room',
+    x: 1295,
+    y: 585,
+    width: 160,
+    height: 18,
+    label: 'CỬA SECURITY ROOM (BẮC)',
   },
 ];
 
 // Complete 4-sided walls enclosing all 6 rooms so players can ONLY enter through the doors
 export const LAB_OBSTACLES = [
   // =========================================================================
-  // 1. IT OFFICE WALLS (Bounds: left=64, top=64, right=504, bottom=464; Door on East y=190..370)
+  // 1. IT OFFICE WALLS (Bounds: left=64, top=64, right=504, bottom=464)
+  //    Doors: East (y=190..370) & South shared walkway (x=245..405)
   // =========================================================================
   wallBox('wall-it-north', 64, 64, 504, 82),
   wallBox('wall-it-west', 64, 64, 82, 464),
-  wallBox('wall-it-south', 64, 446, 504, 464),
+  wallBox('wall-it-south-left', 64, 446, 245, 464),
+  wallBox('wall-it-south-right', 405, 446, 504, 464),
   wallBox('wall-it-east-top', 486, 64, 504, 190),
   wallBox('wall-it-east-bottom', 486, 370, 504, 464),
 
   // =========================================================================
-  // 2. DATABASE ROOM WALLS (Bounds: left=1128, top=64, right=1568, bottom=464; Door on West y=190..370)
+  // 2. DATABASE ROOM WALLS (Bounds: left=1128, top=64, right=1568, bottom=464)
+  //    Doors: West (y=190..370) & South shared walkway (x=1215..1375)
   // =========================================================================
   wallBox('wall-db-north', 1128, 64, 1568, 82),
   wallBox('wall-db-east', 1550, 64, 1568, 464),
-  wallBox('wall-db-south', 1128, 446, 1568, 464),
+  wallBox('wall-db-south-left', 1128, 446, 1215, 464),
+  wallBox('wall-db-south-right', 1375, 446, 1568, 464),
   wallBox('wall-db-west-top', 1128, 64, 1146, 190),
   wallBox('wall-db-west-bottom', 1128, 370, 1146, 464),
 
   // =========================================================================
-  // 3. SERVER ROOM WALLS (Bounds: left=64, top=576, right=504, bottom=992; Door on East y=694..874)
+  // 3. SERVER ROOM WALLS (Bounds: left=64, top=576, right=504, bottom=992)
+  //    Doors: East (y=694..874) & North shared walkway (x=245..405)
   // =========================================================================
-  wallBox('wall-srv-north', 64, 576, 504, 594),
+  wallBox('wall-srv-north-left', 64, 576, 245, 594),
+  wallBox('wall-srv-north-right', 405, 576, 504, 594),
   wallBox('wall-srv-west', 64, 576, 82, 992),
   wallBox('wall-srv-south', 64, 974, 504, 992),
   wallBox('wall-srv-east-top', 486, 576, 504, 694),
   wallBox('wall-srv-east-bottom', 486, 874, 504, 992),
 
   // =========================================================================
-  // 4. SECURITY ROOM WALLS (Bounds: left=1128, top=576, right=1568, bottom=992; Door on West y=694..874)
+  // 4. SECURITY ROOM WALLS (Bounds: left=1128, top=576, right=1568, bottom=992)
+  //    Doors: West (y=694..874) & North shared walkway (x=1215..1375)
   // =========================================================================
-  wallBox('wall-sec-north', 1128, 576, 1568, 594),
+  wallBox('wall-sec-north-left', 1128, 576, 1215, 594),
+  wallBox('wall-sec-north-right', 1375, 576, 1568, 594),
   wallBox('wall-sec-east', 1550, 576, 1568, 992),
   wallBox('wall-sec-south', 1128, 974, 1568, 992),
   wallBox('wall-sec-west-top', 1128, 576, 1146, 694),
   wallBox('wall-sec-west-bottom', 1128, 874, 1146, 992),
 
   // =========================================================================
-  // 5. CENTRAL CONTROL ROOM WALLS (Bounds: left=568, top=64, right=1064, bottom=376; Door on South x=716..916)
+  // 5. CENTRAL CONTROL ROOM WALLS (Bounds: left=568, top=64, right=1064, bottom=376)
+  //    Doors: South (x=716..916), West (y=155..295), East (y=155..295)
   // =========================================================================
   wallBox('wall-ctrl-north', 568, 64, 1064, 82),
-  wallBox('wall-ctrl-west', 568, 64, 586, 376),
-  wallBox('wall-ctrl-east', 1046, 64, 1064, 376),
+  wallBox('wall-ctrl-west-top', 568, 64, 586, 155),
+  wallBox('wall-ctrl-west-bottom', 568, 295, 586, 376),
+  wallBox('wall-ctrl-east-top', 1046, 64, 1064, 155),
+  wallBox('wall-ctrl-east-bottom', 1046, 295, 1064, 376),
   wallBox('wall-ctrl-south-left', 568, 358, 716, 376),
   wallBox('wall-ctrl-south-right', 916, 358, 1064, 376),
 
   // =========================================================================
-  // 6. RECEPTION WALLS (Bounds: left=568, top=664, right=1064, bottom=992; Door on North x=716..916)
+  // 6. RECEPTION WALLS (Bounds: left=568, top=664, right=1064, bottom=992)
+  //    Doors: North (x=716..916), West (y=740..880), East (y=740..880)
   // =========================================================================
   wallBox('wall-rec-south', 568, 974, 1064, 992),
-  wallBox('wall-rec-west', 568, 664, 586, 992),
-  wallBox('wall-rec-east', 1046, 664, 1064, 992),
+  wallBox('wall-rec-west-top', 568, 664, 586, 740),
+  wallBox('wall-rec-west-bottom', 568, 880, 586, 992),
+  wallBox('wall-rec-east-top', 1046, 664, 1064, 740),
+  wallBox('wall-rec-east-bottom', 1046, 880, 1064, 992),
   wallBox('wall-rec-north-left', 568, 664, 716, 682),
   wallBox('wall-rec-north-right', 916, 664, 1064, 682),
 
   // =========================================================================
   // ROOM FURNITURE & HARDWARE UNITS (Placed away from doorways)
   // =========================================================================
-  // 1. RECEPTION (Placed on left & right sides so center 220x220 CodeGym logo is 100% clear)
-  { id: 'reception-desk', x: 645, y: 915, width: 96, height: 38, label: 'BÀN LỄ TÂN', kind: 'desk' },
-  { id: 'reception-sofa', x: 985, y: 915, width: 96, height: 38, label: 'SOFA KHÁCH', kind: 'desk' },
+  // 1. RECEPTION (Placed on left & right sides so center 215x215 CodeGym logo & side doors are 100% clear)
+  { id: 'reception-desk', x: 645, y: 925, width: 96, height: 38, label: 'BÀN LỄ TÂN', kind: 'desk' },
+  { id: 'reception-sofa', x: 985, y: 925, width: 96, height: 38, label: 'SOFA KHÁCH', kind: 'desk' },
 
   // 2. CENTRAL CONTROL ROOM
   { id: 'central-core-pillar', x: 816, y: 145, width: 150, height: 46, label: 'MAINFRAME_CORE', kind: 'server' },
 
   // 3. IT OFFICE
-  { id: 'it-desk-north', x: 185, y: 155, width: 125, height: 40, label: 'BÀN IT_01', kind: 'desk' },
-  { id: 'it-desk-south', x: 185, y: 385, width: 125, height: 40, label: 'BÀN IT_02', kind: 'desk' },
+  { id: 'it-desk-north', x: 165, y: 155, width: 120, height: 40, label: 'BÀN IT_01', kind: 'desk' },
+  { id: 'it-desk-south', x: 165, y: 385, width: 120, height: 40, label: 'BÀN IT_02', kind: 'desk' },
 
   // 4. DATABASE ROOM
-  { id: 'db-cabinet-north', x: 1435, y: 155, width: 120, height: 42, label: 'TỦ HỒ SƠ A', kind: 'cabinet' },
-  { id: 'db-rack-south', x: 1435, y: 385, width: 120, height: 42, label: 'DB_CLUSTER', kind: 'server' },
+  { id: 'db-cabinet-north', x: 1450, y: 155, width: 120, height: 42, label: 'TỦ HỒ SƠ A', kind: 'cabinet' },
+  { id: 'db-rack-south', x: 1450, y: 385, width: 120, height: 42, label: 'DB_CLUSTER', kind: 'server' },
 
   // 5. SERVER ROOM
-  { id: 'server-rack-1', x: 185, y: 660, width: 120, height: 44, label: 'SERVER_RACK_01', kind: 'server' },
-  { id: 'server-rack-2', x: 185, y: 910, width: 120, height: 44, label: 'SERVER_RACK_02', kind: 'server' },
+  { id: 'server-rack-1', x: 165, y: 660, width: 120, height: 44, label: 'SERVER_RACK_01', kind: 'server' },
+  { id: 'server-rack-2', x: 165, y: 910, width: 120, height: 44, label: 'SERVER_RACK_02', kind: 'server' },
 
   // 6. SECURITY ROOM
-  { id: 'sec-monitor-bank', x: 1435, y: 660, width: 120, height: 42, label: 'TRẠM CAMERA', kind: 'desk' },
-  { id: 'sec-cabinet-logs', x: 1435, y: 910, width: 120, height: 42, label: 'TỦ NHẬT KÝ', kind: 'cabinet' },
+  { id: 'sec-monitor-bank', x: 1450, y: 660, width: 120, height: 42, label: 'TRẠM CAMERA', kind: 'desk' },
+  { id: 'sec-cabinet-logs', x: 1450, y: 910, width: 120, height: 42, label: 'TỦ NHẬT KÝ', kind: 'cabinet' },
 ];
 
 export const INTERACTABLE_OBJECTS = [
@@ -353,8 +452,8 @@ export const INTERACTABLE_OBJECTS = [
     objectCategory: 'Bàn làm việc',
     code: 'RECEPTION_PC',
     name: 'Bàn làm việc & Máy tính Lễ tân',
-    x: 645,
-    y: 775,
+    x: 660,
+    y: 725,
     radius: 74,
     color: 0x38bdf8,
     hintMessage: 'Bàn làm việc Lễ tân — Nhấn [E] để kiểm tra sổ trực đêm.',

@@ -119,11 +119,15 @@ export class GameScene extends Phaser.Scene {
 
   drawRoomSigns() {
     SECTORS.forEach((sec) => {
-      const isReception = sec.id === 'sector-reception';
-      const signX = isReception ? sec.x + 125 : sec.x + sec.width / 2;
-      // Place room signs cleanly below the 34px North wall face so they never overlap walls or AC/charts
-      const signY = isReception ? sec.y + 46 : sec.y + 48;
-      const badgeY = isReception ? sec.y + 66 : sec.y + 68;
+      let signX = sec.x + sec.width / 2;
+      if (sec.id === 'sector-reception' || sec.id === 'sector-server-room') {
+        signX = sec.x + 135;
+      } else if (sec.id === 'sector-security-room') {
+        signX = sec.x + sec.width - 135;
+      }
+      // Place room signs cleanly below the 34px North wall face so they never overlap walls or North doorways
+      const signY = sec.y + 48;
+      const badgeY = sec.y + 68;
 
       this.add
         .text(signX, signY, `${sec.name} — ${sec.viName}`, {
