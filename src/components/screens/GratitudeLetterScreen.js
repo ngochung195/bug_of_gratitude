@@ -61,10 +61,38 @@ export function createGratitudeLetterScreen() {
   mentorInput.type = 'text';
   mentorInput.id = 'gratitude-mentor-input';
   mentorInput.className = 'gratitude-input';
-  mentorInput.placeholder = 'Ví dụ: Thầy Nguyễn Văn A / Mentor Tuấn...';
+  mentorInput.placeholder =
+    'Chọn bên dưới hoặc nhập: Đội ngũ giảng viên, CodeGym, Anh Nhật, Anh Luân, Anh Tuấn Anh, Thầy Cấn, Anh Tùng...';
   mentorInput.maxLength = 80;
   mentorInput.value = savedDraft.mentorName;
   mentorField.appendChild(mentorInput);
+
+  // Quick-select recipient chips
+  const recipientChipsWrap = document.createElement('div');
+  recipientChipsWrap.style.cssText =
+    'display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;';
+  const suggestedRecipients = [
+    'Đội ngũ giảng viên',
+    'CodeGym',
+    'Anh Nhật',
+    'Anh Luân',
+    'Anh Tuấn Anh',
+    'Thầy Cấn',
+    'Anh Tùng',
+  ];
+  suggestedRecipients.forEach((recipientName) => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'rain-icon-btn';
+    chip.style.cssText = 'padding: 4px 10px; font-size: 0.76rem;';
+    chip.textContent = recipientName;
+    chip.addEventListener('click', () => {
+      mentorInput.value = recipientName;
+      mentorInput.dispatchEvent(new Event('input'));
+    });
+    recipientChipsWrap.appendChild(chip);
+  });
+  mentorField.appendChild(recipientChipsWrap);
 
   // Field 2: Sender Name (Optional)
   const senderField = document.createElement('div');

@@ -1,125 +1,160 @@
+/**
+ * 10 lời chúc tri ân 20/11 trên bầu trời chung.
+ * Danh sách người nhận:
+ * - Anh Nhật (2 lời chúc)
+ * - Anh Luân (2 lời chúc)
+ * - Thầy Cấn & Anh Tuấn Anh (cùng 1 người — phân bổ 1 lời chúc gọi "Thầy Cấn", 1 lời chúc gọi "Anh Tuấn Anh")
+ * - Anh Tùng (2 lời chúc)
+ * - Đội ngũ giảng viên (1 lời chúc)
+ * - CodeGym (1 lời chúc)
+ */
 export const SEED_GRATITUDE_MESSAGES = [
   {
-    id: '11111111-1111-4111-8111-111111111101',
-    mentorName: 'Thầy Nguyễn Khắc Nhật',
+    id: '22222222-2222-4222-8222-222222222201',
+    mentorName: 'Anh Nhật',
     senderName: 'Minh Quân - C08',
     publicSenderName: 'Minh Quân - C08',
     message:
-      'Cảm ơn thầy đã luôn kiên nhẫn giải thích từng khái niệm OOP và cấu trúc dữ liệu cho tụi em. Nhờ thầy mà em không còn sợ những dòng log đỏ rực nữa. Chúc thầy 20/11 thật nhiều sức khỏe!',
+      'Cảm ơn anh Nhật đã luôn kiên nhẫn giải thích từng khái niệm khó và truyền lửa đam mê lập trình cho tụi em. Nhờ có anh mà những dòng code không còn khô khan nữa. Chúc anh 20/11 thật nhiều sức khỏe!',
     isAnonymous: false,
     isApproved: true,
-    reactionCount: 18,
-    createdAt: '2026-11-16T14:20:00.000Z',
+    reactionCount: 28,
+    createdAt: '2026-11-17T01:10:00.000Z',
   },
   {
-    id: '11111111-1111-4111-8111-111111111102',
-    mentorName: 'Mentor Trần Quốc Tuấn',
+    id: '22222222-2222-4222-8222-222222222202',
+    mentorName: 'Anh Luân',
     senderName: 'Hải Đăng',
     publicSenderName: 'Hải Đăng',
     message:
-      'Em nhớ mãi buổi tối trước ngày bảo vệ dự án, anh vẫn thức cùng nhóm tới 11h đêm để tìm ra lỗi NullPointerException. Cảm ơn người anh, người thầy tận tâm nhất của tụi em!',
+      'Em nhớ mãi những buổi tối trước ngày bảo vệ dự án, anh Luân vẫn tận tình ngồi cùng nhóm gỡ từng lỗi logic nhỏ. Cảm ơn người anh luôn hết lòng vì học viên!',
     isAnonymous: false,
     isApproved: true,
-    reactionCount: 24,
-    createdAt: '2026-11-16T15:10:00.000Z',
+    reactionCount: 25,
+    createdAt: '2026-11-17T01:25:00.000Z',
   },
   {
-    id: '11111111-1111-4111-8111-111111111103',
-    mentorName: 'Cô Lê Thị Thu Lan',
+    id: '22222222-2222-4222-8222-222222222203',
+    mentorName: 'Thầy Cấn',
+    senderName: 'Ngọc Ánh',
+    publicSenderName: 'Ngọc Ánh',
+    message:
+      'Những bài giảng sâu sắc và sự nghiêm khắc đầy tâm huyết của thầy Cấn đã rèn cho tụi em tư duy vững vàng khi bước vào nghề. Nhân ngày 20/11, em kính chúc thầy luôn mạnh khỏe và hạnh phúc!',
+    isAnonymous: false,
+    isApproved: true,
+    reactionCount: 34,
+    createdAt: '2026-11-17T01:40:00.000Z',
+  },
+  {
+    id: '22222222-2222-4222-8222-222222222204',
+    mentorName: 'Anh Tuấn Anh',
     senderName: 'Anonymous',
     publicSenderName: 'Anonymous (Ẩn danh)',
     message:
-      'Những lúc em nản chí nhất vì chuyển ngành học code từ con số 0, chính lời động viên ấm áp của cô đã giữ em ở lại với nghề. Cảm ơn cô vì luôn tin tưởng học viên!',
+      'Trên lớp là người thầy đáng kính, ngoài giờ học lại gần gũi như người anh lớn luôn lắng nghe học viên. Cảm ơn anh Tuấn Anh vì tất cả những bài học quý giá cả trong code lẫn cuộc sống!',
     isAnonymous: true,
     isApproved: true,
     reactionCount: 31,
-    createdAt: '2026-11-16T16:05:00.000Z',
+    createdAt: '2026-11-17T02:00:00.000Z',
   },
   {
-    id: '11111111-1111-4111-8111-111111111104',
-    mentorName: 'Mentor Phạm Hoàng Khoa',
-    senderName: 'Ngọc Ánh - Java Web',
-    publicSenderName: 'Ngọc Ánh - Java Web',
-    message:
-      'Câu nói "Em đã đọc kỹ thông báo lỗi ở dòng số mấy chưa?" của anh đã rèn cho em thói quen tự tư duy và debug bình tĩnh hơn rất nhiều. Tri ân anh nhân ngày 20/11!',
-    isAnonymous: false,
-    isApproved: true,
-    reactionCount: 15,
-    createdAt: '2026-11-16T17:30:00.000Z',
-  },
-  {
-    id: '11111111-1111-4111-8111-111111111105',
-    mentorName: 'Thầy Đỗ Văn Hùng',
-    senderName: 'Tập thể lớp C06',
-    publicSenderName: 'Tập thể lớp C06',
-    message:
-      'Thầy không chỉ dạy tụi em cách viết code sạch mà còn dạy thái độ trách nhiệm với từng sản phẩm mình làm ra. Chúc thầy luôn giữ mãi ngọn lửa nhiệt huyết trên giảng đường CodeGym!',
-    isAnonymous: false,
-    isApproved: true,
-    reactionCount: 29,
-    createdAt: '2026-11-16T18:45:00.000Z',
-  },
-  {
-    id: '11111111-1111-4111-8111-111111111106',
-    mentorName: 'Cô Vũ Mai Hương',
+    id: '22222222-2222-4222-8222-222222222205',
+    mentorName: 'Anh Tùng',
     senderName: 'Hoàng Long',
     publicSenderName: 'Hoàng Long',
     message:
-      'Cảm ơn cô giáo vụ và giảng viên đã luôn đồng hành, nhắc nhở từng bài tập nhỏ và tiếp thêm động lực cho cả lớp mỗi sáng đến trung tâm. Chúc cô 20/11 ngập tràn niềm vui!',
+      'Mỗi lần bí thuật toán hay gặp bug khó, chỉ cần nghe anh Tùng gợi ý hướng tiếp cận là mọi thứ sáng tỏ ngay. Cảm ơn anh Tùng đã luôn đồng hành và tiếp thêm sự tự tin cho tụi em!',
     isAnonymous: false,
-    isApproved: true,
-    reactionCount: 19,
-    createdAt: '2026-11-16T19:20:00.000Z',
-  },
-  {
-    id: '11111111-1111-4111-8111-111111111107',
-    mentorName: 'Mentor Nguyễn Đức Nam',
-    senderName: 'Anonymous',
-    publicSenderName: 'Anonymous (Ẩn danh)',
-    message:
-      'Từ một người từng sợ vòng lặp for và mảng 2 chiều, hôm nay em đã tự tay hoàn thành project đầu tiên nhờ sự chỉ dẫn tận tình của anh. Cảm ơn anh Nam thật nhiều!',
-    isAnonymous: true,
     isApproved: true,
     reactionCount: 22,
-    createdAt: '2026-11-16T20:15:00.000Z',
+    createdAt: '2026-11-17T02:15:00.000Z',
   },
   {
-    id: '11111111-1111-4111-8111-111111111108',
-    mentorName: 'Thầy Bùi Minh Đức',
-    senderName: 'Thanh Tùng',
-    publicSenderName: 'Thanh Tùng',
+    id: '22222222-2222-4222-8222-222222222206',
+    mentorName: 'Đội ngũ giảng viên',
+    senderName: 'Tập thể học viên CodeGym',
+    publicSenderName: 'Tập thể học viên CodeGym',
     message:
-      'Mỗi buổi code review của thầy đều là một bài học quý giá giúp em trưởng thành hơn. Cảm ơn thầy vì sự nghiêm khắc nhưng đầy yêu thương dành cho học trò!',
+      'Lỗi lớn nhất không phải là lỗi trong code, mà là đôi khi chúng em quên nói lời cảm ơn. Nhân ngày 20/11, xin gửi ngàn lời tri ân chân thành nhất tới toàn thể Đội ngũ giảng viên!',
     isAnonymous: false,
     isApproved: true,
-    reactionCount: 16,
-    createdAt: '2026-11-16T21:00:00.000Z',
+    reactionCount: 45,
+    createdAt: '2026-11-17T02:35:00.000Z',
   },
   {
-    id: '11111111-1111-4111-8111-111111111109',
-    mentorName: 'Mentor Lê Bảo Trâm',
+    id: '22222222-2222-4222-8222-222222222207',
+    mentorName: 'CodeGym',
     senderName: 'Khánh Linh',
     publicSenderName: 'Khánh Linh',
     message:
-      'Cảm ơn chị Trâm đã truyền cảm hứng cho em tự tin theo đuổi con đường Frontend Developer. Những góp ý tỉ mỉ về UI/UX của chị luôn là kim chỉ nam của em!',
+      'Cảm ơn mái nhà CodeGym đã tạo ra một môi trường học tập thực chiến, ấm áp và kỷ luật, nơi những người bắt đầu từ con số 0 như em có thể chạm tới ước mơ lập trình viên!',
+    isAnonymous: false,
+    isApproved: true,
+    reactionCount: 39,
+    createdAt: '2026-11-17T02:55:00.000Z',
+  },
+  {
+    id: '22222222-2222-4222-8222-222222222208',
+    mentorName: 'Anh Nhật',
+    senderName: 'Anonymous',
+    publicSenderName: 'Anonymous (Ẩn danh)',
+    message:
+      'Những buổi code review chi tiết của anh Nhật đã giúp em thay đổi hoàn toàn thói quen viết code cẩu thả. Cảm ơn anh vì sự tận tụy và luôn mong muốn học trò tiến bộ mỗi ngày!',
+    isAnonymous: true,
+    isApproved: true,
+    reactionCount: 19,
+    createdAt: '2026-11-17T03:15:00.000Z',
+  },
+  {
+    id: '22222222-2222-4222-8222-222222222209',
+    mentorName: 'Anh Luân',
+    senderName: 'Thanh Sơn',
+    publicSenderName: 'Thanh Sơn',
+    message:
+      'Từ một người từng sợ vòng lặp và mảng hai chiều, hôm nay em đã tự tay hoàn thành dự án đầu tiên nhờ sự chỉ dẫn từng bước của anh Luân. Chúc anh 20/11 ngập tràn niềm vui!',
+    isAnonymous: false,
+    isApproved: true,
+    reactionCount: 24,
+    createdAt: '2026-11-17T03:30:00.000Z',
+  },
+  {
+    id: '22222222-2222-4222-8222-222222222210',
+    mentorName: 'Anh Tùng',
+    senderName: 'Bảo Trâm',
+    publicSenderName: 'Bảo Trâm',
+    message:
+      'Cảm ơn anh Tùng vì những lời động viên đúng lúc mỗi khi tụi em áp lực vì deadline. Chúc anh luôn giữ mãi nụ cười ấm áp và ngọn lửa nhiệt huyết trên hành trình truyền nghề!',
     isAnonymous: false,
     isApproved: true,
     reactionCount: 27,
-    createdAt: '2026-11-17T02:30:00.000Z',
-  },
-  {
-    id: '11111111-1111-4111-8111-111111111110',
-    mentorName: 'Đội ngũ Giảng viên & Mentor CodeGym',
-    senderName: 'Học viên khóa 2026',
-    publicSenderName: 'Học viên khóa 2026',
-    message:
-      'Lỗi lớn nhất không phải là lỗi trong code, mà là đôi khi chúng em quên nói lời cảm ơn. Nhân ngày Nhà giáo Việt Nam 20/11, xin gửi ngàn lời tri ân chân thành nhất tới các Thầy Cô!',
-    isAnonymous: false,
-    isApproved: true,
-    reactionCount: 42,
-    createdAt: '2026-11-17T03:45:00.000Z',
+    createdAt: '2026-11-17T03:50:00.000Z',
   },
 ];
 
-export default SEED_GRATITUDE_MESSAGES;
+/**
+ * Chuẩn hóa tên người nhận để thống kê chính xác số người nhận duy nhất.
+ * Lưu ý đặc biệt: "Thầy Cấn" và "Anh Tuấn Anh" (Thầy Cấn Tuấn Anh) là cùng 1 người.
+ */
+export function normalizeRecipientIdentity(mentorName = '') {
+  const clean = String(mentorName || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
 
+  if (!clean) return '';
+
+  if (
+    clean === 'thầy cấn' ||
+    clean === 'thay can' ||
+    clean === 'anh tuấn anh' ||
+    clean === 'anh tuan anh' ||
+    clean === 'thầy cấn tuấn anh' ||
+    clean === 'cấn tuấn anh'
+  ) {
+    return 'thầy cấn / anh tuấn anh';
+  }
+
+  return clean;
+}
+
+export default SEED_GRATITUDE_MESSAGES;

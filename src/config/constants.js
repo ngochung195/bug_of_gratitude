@@ -10,9 +10,9 @@ export const APP_CONFIG = {
   DEFAULT_PAGE_SIZE: 12,
   REACTION_COOLDOWN_MS: 1200,
   STORAGE_KEY: 'bog_mission_progress_v1',
-  GRATITUDE_STORAGE_KEY: 'bog_gratitude_letters_v1',
-  GRATITUDE_DRAFT_KEY: 'bog_gratitude_draft_v1',
-  REACTION_STORAGE_KEY: 'bog_reacted_messages_v1',
+  GRATITUDE_STORAGE_KEY: 'bog_gratitude_letters_v2',
+  GRATITUDE_DRAFT_KEY: 'bog_gratitude_draft_v2',
+  REACTION_STORAGE_KEY: 'bog_reacted_messages_v2',
 };
 
 export const UI_SCREENS = {

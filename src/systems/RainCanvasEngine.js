@@ -1,7 +1,7 @@
 const PALETTE = {
-  skyTop: '#050814',
-  skyMid: '#0d1430',
-  skyBottom: '#1c123c',
+  skyTop: '#040711',
+  skyMid: '#0b132c',
+  skyBottom: '#1b113a',
   cyan: '#00e5ff',
   purple: '#a855f7',
   pink: '#f43f5e',
@@ -14,7 +14,8 @@ const STAR_COLORS = ['#f8fafc', '#38bdf8', '#c084fc', '#fde68a', '#f472b6'];
 export class RainCanvasEngine {
   constructor(canvas, { onSelectNode, onHoverNode } = {}) {
     this.canvas = canvas;
-    this.ctx = canvas && typeof canvas.getContext === 'function' ? canvas.getContext('2d') : null;
+    this.ctx =
+      canvas && typeof canvas.getContext === 'function' ? canvas.getContext('2d') : null;
     this.onSelectNode = typeof onSelectNode === 'function' ? onSelectNode : null;
     this.onHoverNode = typeof onHoverNode === 'function' ? onHoverNode : null;
 
@@ -29,9 +30,12 @@ export class RainCanvasEngine {
     this.lastFrameTime = 0;
     this.elapsedTime = 0;
 
-    // Pre-allocated object pools
+    // Pre-allocated object pools for high performance
     this.starPool = [];
+    this.rainStreakPool = [];
+    this.bokehPool = [];
     this.particlePool = [];
+    this.ripplePool = [];
     this.burstPool = [];
     this.meteorPool = [];
     this.nebulaOrbs = [];
@@ -63,47 +67,100 @@ export class RainCanvasEngine {
   getCaps() {
     if (this.isMobile) {
       return {
-        maxStars: 28,
-        maxParticles: 16,
+        maxStars: 24,
+        maxParticles: 14,
+        maxRainStreaks: 28,
+        maxBokeh: 8,
+        maxRipples: 6,
         maxBursts: 16,
         maxMeteors: 2,
-        maxVisibleNodes: 16,
-        hitRadius: 40,
+        maxVisibleNodes: 14,
+        hitRadius: 42,
       };
     }
     return {
-      maxStars: 56,
-      maxParticles: 34,
+      maxStars: 48,
+      maxParticles: 30,
+      maxRainStreaks: 56,
+      maxBokeh: 14,
+      maxRipples: 10,
       maxBursts: 28,
       maxMeteors: 3,
       maxVisibleNodes: 24,
-      hitRadius: 34,
+      hitRadius: 36,
     };
   }
 
   initPools() {
     const caps = this.getCaps();
 
-    this.starPool = Array.from({ length: 56 }, (_, i) => ({
+    this.starPool = Array.from({ length: 48 }, (_, i) => ({
       active: i < caps.maxStars,
       xRatio: (i * 0.61803398875) % 1,
-      yRatio: (((i * 0.38196601125) + 0.05) % 0.9) + 0.03,
+      yRatio: ((i * 0.38196601125 + 0.05) % 0.88) + 0.03,
       radius: 0.9 + (i % 4) * 0.6,
-      baseAlpha: 0.35 + (i % 5) * 0.12,
-      twinkleSpeed: 0.9 + (i % 4) * 0.5,
+      baseAlpha: 0.32 + (i % 5) * 0.12,
+      twinkleSpeed: 1.0 + (i % 4) * 0.55,
       phase: i * 1.17,
+      isDiamond: i % 5 === 0,
       color: STAR_COLORS[i % STAR_COLORS.length],
     }));
 
-    this.particlePool = Array.from({ length: 34 }, (_, i) => ({
+    // Shimmering Rain Streaks falling across the sky
+    this.rainStreakPool = Array.from({ length: 56 }, (_, i) => ({
+      active: i < caps.maxRainStreaks,
+      x: ((i * 73) % 1000) / 1000,
+      y: ((i * 137) % 1000) / 1000,
+      vy: 0.24 + (i % 5) * 0.06,
+      vx: -0.025,
+      length: 22 + (i % 4) * 12,
+      alpha: 0.15 + (i % 4) * 0.08,
+      color:
+        i % 3 === 0
+          ? '251, 191, 36'
+          : i % 3 === 1
+            ? '56, 189, 248'
+            : '244, 114, 182',
+    }));
+
+    // Dreamy Bokeh Orbs
+    this.bokehPool = Array.from({ length: 14 }, (_, i) => ({
+      active: i < caps.maxBokeh,
+      x: ((i * 193) % 1000) / 1000,
+      y: ((i * 109) % 1000) / 1000,
+      vy: 0.02 + (i % 3) * 0.01,
+      vx: ((i % 2) * 2 - 1) * 0.008,
+      radius: 16 + (i % 4) * 11,
+      alpha: 0.05 + (i % 3) * 0.03,
+      color:
+        i % 3 === 0
+          ? 'rgba(251, 191, 36, 0.12)'
+          : i % 3 === 1
+            ? 'rgba(0, 229, 255, 0.1)'
+            : 'rgba(168, 85, 247, 0.12)',
+    }));
+
+    // Sparkle Motes
+    this.particlePool = Array.from({ length: 30 }, (_, i) => ({
       active: i < caps.maxParticles,
       x: ((i * 97) % 1000) / 1000,
       y: ((i * 53) % 1000) / 1000,
-      vy: 0.014 + (i % 4) * 0.006,
-      vx: ((i % 3) - 1) * 0.004,
-      size: 1.5 + (i % 3) * 0.75,
-      alpha: 0.28 + (i % 4) * 0.14,
+      vy: 0.055 + (i % 4) * 0.02,
+      vx: ((i % 3) - 1) * 0.008,
+      size: 1.5 + (i % 3) * 0.8,
+      alpha: 0.35 + (i % 4) * 0.14,
       color: i % 3 === 0 ? PALETTE.cyan : i % 3 === 1 ? PALETTE.warmGold : PALETTE.pink,
+    }));
+
+    // Ripples when letters / rain touch the lower horizon
+    this.ripplePool = Array.from({ length: 10 }, () => ({
+      active: false,
+      x: 0,
+      y: 0,
+      radius: 2,
+      maxRadius: 48,
+      alpha: 0.65,
+      color: PALETTE.warmGold,
     }));
 
     this.burstPool = Array.from({ length: 28 }, () => ({
@@ -119,19 +176,19 @@ export class RainCanvasEngine {
 
     this.meteorPool = Array.from({ length: 3 }, (_, i) => ({
       active: i === 0,
-      x: 0.18 + i * 0.28,
-      y: 0.08 + i * 0.06,
-      vx: 0.34,
-      vy: 0.18,
-      length: 95,
-      alpha: 0.85,
-      cooldown: i * 2.2,
+      x: 0.15 + i * 0.28,
+      y: 0.06 + i * 0.06,
+      vx: 0.36,
+      vy: 0.19,
+      length: 105,
+      alpha: 0.9,
+      cooldown: i * 2.0,
     }));
 
     this.nebulaOrbs = [
-      { xRatio: 0.2, yRatio: 0.3, radiusRatio: 0.38, color: 'rgba(139, 92, 246, 0.16)', phase: 0 },
-      { xRatio: 0.78, yRatio: 0.26, radiusRatio: 0.34, color: 'rgba(0, 229, 255, 0.13)', phase: 2.1 },
-      { xRatio: 0.5, yRatio: 0.62, radiusRatio: 0.4, color: 'rgba(251, 191, 36, 0.11)', phase: 4.2 },
+      { xRatio: 0.2, yRatio: 0.28, radiusRatio: 0.38, color: 'rgba(139, 92, 246, 0.17)', phase: 0 },
+      { xRatio: 0.78, yRatio: 0.25, radiusRatio: 0.34, color: 'rgba(0, 229, 255, 0.14)', phase: 2.1 },
+      { xRatio: 0.5, yRatio: 0.64, radiusRatio: 0.42, color: 'rgba(251, 191, 36, 0.12)', phase: 4.2 },
     ];
   }
 
@@ -187,6 +244,12 @@ export class RainCanvasEngine {
     this.particlePool.forEach((p, idx) => {
       p.active = idx < caps.maxParticles;
     });
+    this.rainStreakPool.forEach((r, idx) => {
+      r.active = idx < caps.maxRainStreaks;
+    });
+    this.bokehPool.forEach((b, idx) => {
+      b.active = idx < caps.maxBokeh;
+    });
 
     this.recomputeNodePositions();
     this.renderFrame(0.016);
@@ -203,68 +266,50 @@ export class RainCanvasEngine {
     }
   }
 
+  /**
+   * Initialize the falling gratitude letters across staggered horizontal lanes & vertical rain positions.
+   */
   setMessages(messages = [], { highlightMessageId = null, reactionCounts = {} } = {}) {
     const caps = this.getCaps();
     const safeList = Array.isArray(messages) ? messages.slice(0, caps.maxVisibleNodes) : [];
-    const total = safeList.length;
-
-    // Scenic celestial arc coordinates for up to 12+ wishes so 10 wishes form a grand canopy
-    const presetCoordinates = [
-      { x: 0.5, y: 0.34 },
-      { x: 0.24, y: 0.28 },
-      { x: 0.76, y: 0.28 },
-      { x: 0.15, y: 0.48 },
-      { x: 0.37, y: 0.46 },
-      { x: 0.63, y: 0.46 },
-      { x: 0.85, y: 0.48 },
-      { x: 0.26, y: 0.64 },
-      { x: 0.5, y: 0.62 },
-      { x: 0.74, y: 0.64 },
-      { x: 0.16, y: 0.24 },
-      { x: 0.84, y: 0.24 },
-    ];
+    const total = Math.max(1, safeList.length);
 
     this.letterNodes = safeList.map((msg, index) => {
       const isHighlighted = Boolean(highlightMessageId && msg.id === highlightMessageId);
 
-      let xRatio;
-      let yRatio;
+      // Spread letters evenly across horizontal lanes (0.10 .. 0.90)
+      const laneRatio =
+        total === 1
+          ? 0.5
+          : 0.09 + ((index * 0.61803398875 * 1.3 + index / total) % 0.82);
 
-      if (isHighlighted) {
-        xRatio = 0.5;
-        yRatio = 0.38;
-      } else if (index < presetCoordinates.length && !this.isMobile) {
-        xRatio = presetCoordinates[index].x;
-        yRatio = presetCoordinates[index].y;
-      } else {
-        const cols = this.isMobile
-          ? Math.min(3, Math.max(2, total))
-          : Math.min(5, Math.max(3, Math.ceil(Math.sqrt(total * 1.4))));
-        const rows = Math.max(1, Math.ceil(total / cols));
-        const col = index % cols;
-        const row = Math.floor(index / cols);
+      // Stagger vertical starting positions so letters rain continuously across the whole screen
+      const initialYRatio = isHighlighted
+        ? 0.35
+        : 0.12 + ((index * 0.29 + (index % 3) * 0.21) % 0.68);
 
-        const jitterX = (((index * 37) % 100) / 100 - 0.5) * (0.36 / cols);
-        const jitterY = (((index * 61) % 100) / 100 - 0.5) * (0.3 / rows);
-
-        xRatio = Math.min(0.88, Math.max(0.12, (col + 0.5) / cols + jitterX));
-        yRatio = Math.min(0.72, Math.max(0.22, 0.22 + ((row + 0.5) / rows) * 0.48 + jitterY));
-      }
+      const fallSpeedPx = this.isMobile
+        ? 28 + (index % 4) * 7
+        : 36 + (index % 5) * 8;
 
       return {
         id: msg.id,
         message: msg,
-        xRatio,
-        yRatio,
-        x: xRatio * this.width,
-        y: yRatio * this.height,
-        startY: isHighlighted ? this.height * 0.88 : yRatio * this.height,
+        xRatio: isHighlighted ? 0.5 : laneRatio,
+        yRatio: initialYRatio,
+        x: (isHighlighted ? 0.5 : laneRatio) * this.width,
+        y: initialYRatio * this.height,
+        startY: isHighlighted ? this.height * 0.88 : initialYRatio * this.height,
         entryProgress: isHighlighted && !this.reducedMotion ? 0 : 1,
-        floatPhase: index * 1.15,
-        floatSpeed: 1.05 + (index % 4) * 0.2,
+        fallSpeed: fallSpeedPx,
+        swayPhase: index * 1.35,
+        swaySpeed: 1.15 + (index % 4) * 0.22,
+        swayAmp: this.isMobile ? 12 + (index % 3) * 4 : 18 + (index % 4) * 6,
+        tiltAngle: 0,
+        trailLength: isHighlighted ? 78 : 54 + (index % 3) * 14,
         isHighlighted,
         reactionCount: Number(reactionCounts[msg.id] ?? msg.reactionCount ?? 0),
-        variant: index % 2 === 0 ? 'letter' : 'star',
+        variant: index % 3 === 0 ? 'gold' : index % 3 === 1 ? 'cyan' : 'pink',
       };
     });
 
@@ -291,11 +336,31 @@ export class RainCanvasEngine {
   recomputeNodePositions() {
     this.letterNodes.forEach((node) => {
       node.x = node.xRatio * this.width;
-      const targetY = node.yRatio * this.height;
-      node.startY = node.isHighlighted ? this.height * 0.88 : targetY;
-      const easeProgress = 1 - Math.pow(1 - Math.min(1, node.entryProgress), 3);
-      node.y = node.startY + (targetY - node.startY) * easeProgress;
+      if (node.entryProgress < 1) {
+        const targetY = node.yRatio * this.height;
+        const easeProgress = 1 - Math.pow(1 - Math.min(1, node.entryProgress), 3);
+        node.y = node.startY + (targetY - node.startY) * easeProgress;
+      } else {
+        node.y = node.yRatio * this.height;
+      }
     });
+  }
+
+  spawnRipple(x, y, color = PALETTE.warmGold) {
+    const caps = this.getCaps();
+    for (let i = 0; i < Math.min(this.ripplePool.length, caps.maxRipples); i += 1) {
+      const r = this.ripplePool[i];
+      if (!r.active) {
+        r.active = true;
+        r.x = x;
+        r.y = y;
+        r.radius = 4;
+        r.maxRadius = this.isMobile ? 38 : 56;
+        r.alpha = 0.65;
+        r.color = color;
+        break;
+      }
+    }
   }
 
   triggerHeartBurst(messageId) {
@@ -312,14 +377,14 @@ export class RainCanvasEngine {
       const p = this.burstPool[i];
       if (!p.active) {
         const angle = (Math.PI * 2 * spawned) / Math.min(14, caps.maxBursts);
-        const speed = 46 + (spawned % 4) * 24;
+        const speed = 48 + (spawned % 4) * 26;
         p.active = true;
         p.x = targetNode.x;
         p.y = targetNode.y;
         p.vx = Math.cos(angle) * speed;
-        p.vy = Math.sin(angle) * speed - 20;
+        p.vy = Math.sin(angle) * speed - 22;
         p.alpha = 1;
-        p.size = 2.6 + (spawned % 3) * 1.3;
+        p.size = 2.6 + (spawned % 3) * 1.4;
         p.color =
           spawned % 3 === 0
             ? PALETTE.warmGold
@@ -437,7 +502,36 @@ export class RainCanvasEngine {
 
     this.elapsedTime += dt;
 
-    // 1. Update falling/drifting sky particles
+    // 1. Update Shimmering Rain Streaks
+    for (let i = 0; i < this.rainStreakPool.length; i += 1) {
+      const r = this.rainStreakPool[i];
+      if (!r.active) continue;
+
+      r.y += r.vy * dt;
+      r.x += r.vx * dt;
+
+      if (r.y > 1.05) {
+        r.y = -0.06;
+        r.x = (r.x + 0.41) % 1;
+      }
+      if (r.x < -0.05) {
+        r.x = 1.04;
+      }
+    }
+
+    // 2. Update Dreamy Bokeh Orbs
+    for (let i = 0; i < this.bokehPool.length; i += 1) {
+      const b = this.bokehPool[i];
+      if (!b.active) continue;
+
+      b.y += b.vy * dt;
+      b.x += b.vx * dt;
+      if (b.y > 1.08) b.y = -0.08;
+      if (b.x < -0.08) b.x = 1.08;
+      if (b.x > 1.08) b.x = -0.08;
+    }
+
+    // 3. Update Sparkle Particles
     for (let i = 0; i < this.particlePool.length; i += 1) {
       const p = this.particlePool[i];
       if (!p.active) continue;
@@ -453,7 +547,7 @@ export class RainCanvasEngine {
       if (p.x > 1.02) p.x = -0.02;
     }
 
-    // 2. Update shooting stars / meteors
+    // 4. Update Shooting Stars / Meteors
     const caps = this.getCaps();
     for (let i = 0; i < Math.min(this.meteorPool.length, caps.maxMeteors); i += 1) {
       const m = this.meteorPool[i];
@@ -464,7 +558,7 @@ export class RainCanvasEngine {
 
         if (m.alpha <= 0 || m.x > 1.15 || m.y > 0.9) {
           m.active = false;
-          m.cooldown = 1.8 + (i % 3) * 1.4;
+          m.cooldown = 1.6 + (i % 3) * 1.2;
         }
       } else {
         m.cooldown -= dt;
@@ -472,34 +566,69 @@ export class RainCanvasEngine {
           m.active = true;
           m.x = 0.05 + ((this.elapsedTime * 0.17 + i * 0.31) % 0.65);
           m.y = 0.04 + ((i * 0.11) % 0.25);
-          m.alpha = 0.92;
+          m.alpha = 0.95;
         }
       }
     }
 
-    // 3. Update floating letters & rising new letter animation
+    // 5. Update Falling Gratitude Letters ("Rơi như mưa thật")
     for (let i = 0; i < this.letterNodes.length; i += 1) {
       const node = this.letterNodes[i];
+
+      // If newly submitted, first rise to top-center before joining the gentle rain
       if (node.entryProgress < 1) {
         node.entryProgress = Math.min(1, node.entryProgress + dt * 0.65);
+        const targetY = node.yRatio * this.height;
+        const easeProgress = 1 - Math.pow(1 - node.entryProgress, 3);
+        node.y = node.startY + (targetY - node.startY) * easeProgress;
+        node.x = node.xRatio * this.width;
+        continue;
       }
 
-      const targetY = node.yRatio * this.height;
-      const easeProgress = 1 - Math.pow(1 - node.entryProgress, 3);
-      const baseY = node.startY + (targetY - node.startY) * easeProgress;
+      // Pause/slow down the hovered or selected letter so user can click it effortlessly
+      const isHoveredOrSelected =
+        this.hoveredNodeId === node.id || this.selectedNodeId === node.id;
+      const speedFactor = isHoveredOrSelected ? 0.08 : 1;
 
-      const bobOffset =
-        Math.sin(this.elapsedTime * node.floatSpeed + node.floatPhase) *
-        (this.isMobile ? 6 : 9);
+      node.y += node.fallSpeed * speedFactor * dt;
+      node.yRatio = node.y / Math.max(1, this.height);
+
+      // Gentle horizontal wind sway & envelope flutter tilt
       const swayOffset =
-        Math.cos(this.elapsedTime * (node.floatSpeed * 0.7) + node.floatPhase) *
-        (this.isMobile ? 4 : 6);
-
+        Math.sin(this.elapsedTime * node.swaySpeed + node.swayPhase) * node.swayAmp;
       node.x = node.xRatio * this.width + swayOffset;
-      node.y = baseY + bobOffset;
+      node.tiltAngle =
+        Math.cos(this.elapsedTime * node.swaySpeed + node.swayPhase) * 0.12;
+
+      // When a falling letter reaches the lower sky, spawn a glowing ripple & loop back to top
+      if (node.y > this.height - 68) {
+        this.spawnRipple(
+          node.x,
+          this.height - 72,
+          node.variant === 'cyan'
+            ? PALETTE.cyan
+            : node.variant === 'pink'
+              ? PALETTE.pink
+              : PALETTE.warmGold
+        );
+        node.y = -48 - (i % 4) * 24;
+        node.yRatio = node.y / Math.max(1, this.height);
+        node.xRatio = 0.1 + ((node.xRatio + 0.23) % 0.8);
+      }
     }
 
-    // 4. Update reaction burst particles
+    // 6. Update Horizon Ripples
+    for (let i = 0; i < this.ripplePool.length; i += 1) {
+      const rp = this.ripplePool[i];
+      if (!rp.active) continue;
+      rp.radius += 38 * dt;
+      rp.alpha -= 0.75 * dt;
+      if (rp.alpha <= 0 || rp.radius >= rp.maxRadius) {
+        rp.active = false;
+      }
+    }
+
+    // 7. Update Reaction Burst Particles
     for (let i = 0; i < this.burstPool.length; i += 1) {
       const b = this.burstPool[i];
       if (!b.active) continue;
@@ -525,7 +654,7 @@ export class RainCanvasEngine {
     // 1. Deep Night Sky Gradient
     const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
     skyGrad.addColorStop(0, PALETTE.skyTop);
-    skyGrad.addColorStop(0.52, PALETTE.skyMid);
+    skyGrad.addColorStop(0.5, PALETTE.skyMid);
     skyGrad.addColorStop(1, PALETTE.skyBottom);
     ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, w, h);
@@ -548,24 +677,69 @@ export class RainCanvasEngine {
       ctx.fillRect(0, 0, w, h);
     }
 
-    // 3. Twinkling Stars
+    // 3. Dreamy Bokeh Light Orbs
+    for (let i = 0; i < this.bokehPool.length; i += 1) {
+      const b = this.bokehPool[i];
+      if (!b.active) continue;
+      ctx.fillStyle = b.color;
+      ctx.beginPath();
+      ctx.arc(b.x * w, b.y * h, b.radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 4. Twinkling Stars & 4-Point Diamond Stars
     for (let i = 0; i < this.starPool.length; i += 1) {
       const star = this.starPool[i];
       if (!star.active) continue;
 
       const twinkle = this.reducedMotion
         ? star.baseAlpha
-        : star.baseAlpha + Math.sin(this.elapsedTime * star.twinkleSpeed + star.phase) * 0.26;
-      const alpha = Math.min(0.98, Math.max(0.14, twinkle));
+        : star.baseAlpha + Math.sin(this.elapsedTime * star.twinkleSpeed + star.phase) * 0.28;
+      const alpha = Math.min(0.98, Math.max(0.12, twinkle));
+      const sx = star.xRatio * w;
+      const sy = star.yRatio * h;
 
       ctx.globalAlpha = alpha;
       ctx.fillStyle = star.color;
       ctx.beginPath();
-      ctx.arc(star.xRatio * w, star.yRatio * h, star.radius, 0, Math.PI * 2);
+      ctx.arc(sx, sy, star.radius, 0, Math.PI * 2);
       ctx.fill();
+
+      if (star.isDiamond && alpha > 0.55) {
+        ctx.strokeStyle = star.color;
+        ctx.lineWidth = 0.9;
+        ctx.beginPath();
+        ctx.moveTo(sx - star.radius * 3.2, sy);
+        ctx.lineTo(sx + star.radius * 3.2, sy);
+        ctx.moveTo(sx, sy - star.radius * 3.2);
+        ctx.lineTo(sx, sy + star.radius * 3.2);
+        ctx.stroke();
+      }
     }
 
-    // 4. Shooting Stars / Meteors
+    // 5. Shimmering Light Rain Streaks
+    for (let i = 0; i < this.rainStreakPool.length; i += 1) {
+      const r = this.rainStreakPool[i];
+      if (!r.active) continue;
+
+      const x1 = r.x * w;
+      const y1 = r.y * h;
+      const x2 = x1 - r.vx * 85;
+      const y2 = y1 - r.length;
+
+      const streakGrad = ctx.createLinearGradient(x1, y1, x2, y2);
+      streakGrad.addColorStop(0, `rgba(${r.color}, ${r.alpha})`);
+      streakGrad.addColorStop(1, `rgba(${r.color}, 0)`);
+
+      ctx.strokeStyle = streakGrad;
+      ctx.lineWidth = 1.25;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    // 6. Shooting Stars / Meteors
     if (!this.reducedMotion) {
       for (let i = 0; i < this.meteorPool.length; i += 1) {
         const m = this.meteorPool[i];
@@ -578,7 +752,7 @@ export class RainCanvasEngine {
 
         const tailGrad = ctx.createLinearGradient(headX, headY, tailX, tailY);
         tailGrad.addColorStop(0, `rgba(254, 240, 138, ${m.alpha})`);
-        tailGrad.addColorStop(0.4, `rgba(56, 189, 248, ${m.alpha * 0.6})`);
+        tailGrad.addColorStop(0.4, `rgba(56, 189, 248, ${m.alpha * 0.65})`);
         tailGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
 
         ctx.strokeStyle = tailGrad;
@@ -596,7 +770,7 @@ export class RainCanvasEngine {
       }
     }
 
-    // 5. Falling / Drifting Light Particles
+    // 7. Falling Sparkle Motes
     for (let i = 0; i < this.particlePool.length; i += 1) {
       const p = this.particlePool[i];
       if (!p.active) continue;
@@ -610,36 +784,32 @@ export class RainCanvasEngine {
 
     ctx.globalAlpha = 1;
 
-    // 6. Luminous Constellation Threads Connecting Floating Letters
-    const maxConnectDist = this.isMobile ? 210 : 340;
-    const maxConnectDistSq = maxConnectDist * maxConnectDist;
+    // 8. Horizon Ripples when Letters Touch Down
+    for (let i = 0; i < this.ripplePool.length; i += 1) {
+      const rp = this.ripplePool[i];
+      if (!rp.active || rp.alpha <= 0) continue;
 
-    for (let i = 0; i < this.letterNodes.length; i += 1) {
-      const a = this.letterNodes[i];
-      for (let j = i + 1; j < this.letterNodes.length; j += 1) {
-        const b = this.letterNodes[j];
-        const dx = a.x - b.x;
-        const dy = a.y - b.y;
-        const distSq = dx * dx + dy * dy;
-        if (distSq <= maxConnectDistSq) {
-          const strength = 1 - Math.sqrt(distSq) / maxConnectDist;
-          ctx.strokeStyle = `rgba(251, 191, 36, ${(strength * 0.28).toFixed(3)})`;
-          ctx.lineWidth = 1.2;
-          ctx.beginPath();
-          ctx.moveTo(a.x, a.y);
-          ctx.lineTo(b.x, b.y);
-          ctx.stroke();
-        }
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, rp.alpha);
+      ctx.strokeStyle = rp.color;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      if (typeof ctx.ellipse === 'function') {
+        ctx.ellipse(rp.x, rp.y, rp.radius, rp.radius * 0.32, 0, 0, Math.PI * 2);
+      } else {
+        ctx.arc(rp.x, rp.y, rp.radius * 0.5, 0, Math.PI * 2);
       }
+      ctx.stroke();
+      ctx.restore();
     }
 
-    // 7. Floating Gratitude Letters & Stars
+    // 9. Falling Gratitude Letters with Luminous Comet Trails
     for (let i = 0; i < this.letterNodes.length; i += 1) {
       const node = this.letterNodes[i];
-      this.drawLetterNode(ctx, node);
+      this.drawFallingLetterNode(ctx, node);
     }
 
-    // 8. Heart Burst Particles
+    // 10. Heart Burst Particles
     for (let i = 0; i < this.burstPool.length; i += 1) {
       const b = this.burstPool[i];
       if (!b.active) continue;
@@ -654,7 +824,7 @@ export class RainCanvasEngine {
     ctx.globalAlpha = 1;
   }
 
-  drawLetterNode(ctx, node) {
+  drawFallingLetterNode(ctx, node) {
     const isHovered = this.hoveredNodeId === node.id;
     const isSelected = this.selectedNodeId === node.id;
     const isFeatured = node.isHighlighted || isHovered || isSelected;
@@ -663,27 +833,63 @@ export class RainCanvasEngine {
     const y = node.y;
     const pulse = this.reducedMotion
       ? 1
-      : 1 + Math.sin(this.elapsedTime * 2.4 + node.floatPhase) * 0.1;
+      : 1 + Math.sin(this.elapsedTime * 2.8 + node.swayPhase) * 0.1;
 
-    // 1. Multi-layered Luminous Halo Glow
-    const haloRadius = (isFeatured ? 46 : 34) * pulse;
+    // 1. Upward Shimmering Stardust Rain Trail behind the Falling Letter
+    const trailLen = isFeatured ? node.trailLength * 1.25 : node.trailLength;
+    const trailGrad = ctx.createLinearGradient(x, y, x - node.tiltAngle * 40, y - trailLen);
+
+    if (node.isHighlighted || node.variant === 'gold') {
+      trailGrad.addColorStop(0, 'rgba(251, 191, 36, 0.55)');
+      trailGrad.addColorStop(0.5, 'rgba(244, 63, 94, 0.22)');
+      trailGrad.addColorStop(1, 'rgba(251, 191, 36, 0)');
+    } else if (node.variant === 'cyan') {
+      trailGrad.addColorStop(0, 'rgba(0, 229, 255, 0.52)');
+      trailGrad.addColorStop(0.5, 'rgba(168, 85, 247, 0.2)');
+      trailGrad.addColorStop(1, 'rgba(0, 229, 255, 0)');
+    } else {
+      trailGrad.addColorStop(0, 'rgba(244, 114, 182, 0.52)');
+      trailGrad.addColorStop(0.5, 'rgba(251, 191, 36, 0.2)');
+      trailGrad.addColorStop(1, 'rgba(244, 114, 182, 0)');
+    }
+
+    ctx.strokeStyle = trailGrad;
+    ctx.lineWidth = isFeatured ? 5 : 3.2;
+    ctx.beginPath();
+    ctx.moveTo(x, y - 6);
+    ctx.lineTo(x - node.tiltAngle * 35, y - trailLen);
+    ctx.stroke();
+
+    // Small sparkling trail droplets above the envelope
+    ctx.fillStyle = isFeatured ? '#fef08a' : '#bae6fd';
+    ctx.beginPath();
+    ctx.arc(x - node.tiltAngle * 14, y - trailLen * 0.38, 1.8, 0, Math.PI * 2);
+    ctx.arc(x - node.tiltAngle * 26, y - trailLen * 0.72, 1.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Multi-layered Luminous Halo Glow
+    const haloRadius = (isFeatured ? 48 : 34) * pulse;
     const haloGrad = ctx.createRadialGradient(x, y, 2, x, y, haloRadius);
 
     if (node.isHighlighted) {
-      haloGrad.addColorStop(0, 'rgba(251, 191, 36, 0.72)');
-      haloGrad.addColorStop(0.5, 'rgba(244, 63, 94, 0.28)');
+      haloGrad.addColorStop(0, 'rgba(251, 191, 36, 0.78)');
+      haloGrad.addColorStop(0.5, 'rgba(244, 63, 94, 0.32)');
       haloGrad.addColorStop(1, 'rgba(251, 191, 36, 0)');
     } else if (isHovered || isSelected) {
-      haloGrad.addColorStop(0, 'rgba(0, 229, 255, 0.68)');
-      haloGrad.addColorStop(0.5, 'rgba(168, 85, 247, 0.25)');
+      haloGrad.addColorStop(0, 'rgba(0, 229, 255, 0.75)');
+      haloGrad.addColorStop(0.5, 'rgba(251, 191, 36, 0.3)');
       haloGrad.addColorStop(1, 'rgba(0, 229, 255, 0)');
-    } else if (node.variant === 'star') {
-      haloGrad.addColorStop(0, 'rgba(168, 85, 247, 0.48)');
-      haloGrad.addColorStop(0.55, 'rgba(56, 189, 248, 0.18)');
-      haloGrad.addColorStop(1, 'rgba(168, 85, 247, 0)');
+    } else if (node.variant === 'cyan') {
+      haloGrad.addColorStop(0, 'rgba(0, 229, 255, 0.46)');
+      haloGrad.addColorStop(0.55, 'rgba(168, 85, 247, 0.18)');
+      haloGrad.addColorStop(1, 'rgba(0, 229, 255, 0)');
+    } else if (node.variant === 'pink') {
+      haloGrad.addColorStop(0, 'rgba(244, 114, 182, 0.46)');
+      haloGrad.addColorStop(0.55, 'rgba(251, 191, 36, 0.18)');
+      haloGrad.addColorStop(1, 'rgba(244, 114, 182, 0)');
     } else {
-      haloGrad.addColorStop(0, 'rgba(251, 191, 36, 0.48)');
-      haloGrad.addColorStop(0.55, 'rgba(245, 158, 11, 0.16)');
+      haloGrad.addColorStop(0, 'rgba(251, 191, 36, 0.5)');
+      haloGrad.addColorStop(0.55, 'rgba(245, 158, 11, 0.18)');
       haloGrad.addColorStop(1, 'rgba(251, 191, 36, 0)');
     }
 
@@ -692,11 +898,11 @@ export class RainCanvasEngine {
     ctx.arc(x, y, haloRadius, 0, Math.PI * 2);
     ctx.fill();
 
-    // 2. Celestial Star Rays behind the Envelope
-    const rayLen = (isFeatured ? 24 : 17) * pulse;
+    // 3. Celestial Star Rays behind the Envelope
+    const rayLen = (isFeatured ? 25 : 17) * pulse;
     ctx.strokeStyle = isFeatured
-      ? 'rgba(254, 240, 138, 0.75)'
-      : 'rgba(251, 191, 36, 0.38)';
+      ? 'rgba(254, 240, 138, 0.8)'
+      : 'rgba(251, 191, 36, 0.4)';
     ctx.lineWidth = 1.2;
     ctx.beginPath();
     ctx.moveTo(x - rayLen, y);
@@ -705,19 +911,23 @@ export class RainCanvasEngine {
     ctx.lineTo(x, y + rayLen);
     ctx.stroke();
 
-    // 3. Glowing Envelope Icon on Sky
-    const envW = isFeatured ? 32 : 26;
-    const envH = isFeatured ? 21 : 17;
+    // 4. Glowing Tilted Envelope Icon
+    const envW = isFeatured ? 34 : 28;
+    const envH = isFeatured ? 22 : 18;
     const left = x - envW / 2;
     const top = y - envH / 2;
 
-    ctx.fillStyle = node.isHighlighted ? '#fef3c7' : '#1e293b';
+    ctx.fillStyle = node.isHighlighted ? '#fef3c7' : '#16203d';
     ctx.strokeStyle = node.isHighlighted
       ? PALETTE.warmGold
       : isHovered || isSelected
         ? PALETTE.cyan
-        : '#fbbf24';
-    ctx.lineWidth = isFeatured ? 2.2 : 1.6;
+        : node.variant === 'cyan'
+          ? '#38bdf8'
+          : node.variant === 'pink'
+            ? '#f472b6'
+            : '#fbbf24';
+    ctx.lineWidth = isFeatured ? 2.2 : 1.7;
 
     ctx.beginPath();
     ctx.rect(left, top, envW, envH);
@@ -727,11 +937,17 @@ export class RainCanvasEngine {
     // Envelope Flap V-line
     ctx.beginPath();
     ctx.moveTo(left, top);
-    ctx.lineTo(x, y + 2);
+    ctx.lineTo(x, y + 3);
     ctx.lineTo(left + envW, top);
     ctx.stroke();
 
-    // 4. Mentor Short Label + Heart Count below the floating envelope
+    // Wax Seal Dot at center of Envelope Flap
+    ctx.fillStyle = isFeatured ? '#f43f5e' : '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(x, y + 2, 2.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 5. Mentor Short Label + Heart Count below/above the falling envelope
     const rawMentor = String(node.message?.mentorName || 'Mentor');
     const shortMentor = rawMentor.length > 18 ? `${rawMentor.slice(0, 17)}…` : rawMentor;
 

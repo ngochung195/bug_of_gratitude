@@ -1,6 +1,9 @@
 import { APP_CONFIG, EVENTS } from '../config/constants.js';
 import { eventBus } from '../core/EventBus.js';
-import { SEED_GRATITUDE_MESSAGES } from '../data/SeedGratitudeData.js';
+import {
+  normalizeRecipientIdentity,
+  SEED_GRATITUDE_MESSAGES,
+} from '../data/SeedGratitudeData.js';
 import { GratitudeValidator } from '../systems/GratitudeValidator.js';
 import { gratitudeStorage } from './GratitudeStorage.js';
 import { getSupabaseStatus, supabase as defaultSupabaseClient } from './supabaseClient.js';
@@ -262,9 +265,18 @@ export class GratitudeService {
     const applyLocalFallback = (errorMsg = null) => {
       let allItems = this.getLocalAndSeededMessages();
       if (trimmedQuery.length > 0) {
-        allItems = allItems.filter((item) =>
-          item.mentorName.toLowerCase().includes(trimmedQuery)
-        );
+        const queryIdentity = normalizeRecipientIdentity(trimmedQuery);
+        allItems = allItems.filter((item) => {
+          const itemLower = item.mentorName.toLowerCase();
+          if (itemLower.includes(trimmedQuery)) return true;
+          if (
+            queryIdentity === 'thầy cấn / anh tuấn anh' &&
+            normalizeRecipientIdentity(item.mentorName) === 'thầy cấn / anh tuấn anh'
+          ) {
+            return true;
+          }
+          return false;
+        });
       }
       const totalCount = allItems.length;
       const totalPages = totalCount > 0 ? Math.ceil(totalCount / safePageSize) : 0;
@@ -419,10 +431,7 @@ export class GratitudeService {
       let totalReactions = 0;
 
       all.forEach((m) => {
-        const normMentor = String(m.mentorName || '')
-          .trim()
-          .replace(/\s+/g, ' ')
-          .toLowerCase();
+        const normMentor = normalizeRecipientIdentity(m.mentorName);
         if (normMentor) mentorSet.add(normMentor);
         totalReactions += Number(m.reactionCount || 0);
       });
@@ -469,10 +478,7 @@ export class GratitudeService {
 
       const mentorSet = new Set();
       approvedRows.forEach((row) => {
-        const normalizedMentor = String(row.mentor_name || '')
-          .trim()
-          .replace(/\s+/g, ' ')
-          .toLowerCase();
+        const normalizedMentor = normalizeRecipientIdentity(row.mentor_name);
         if (normalizedMentor) {
           mentorSet.add(normalizedMentor);
         }
