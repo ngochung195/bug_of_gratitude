@@ -192,7 +192,7 @@
   background: #282973;
   border: 1px solid rgba(56, 189, 248, 0.5);
   border-radius: var(--radius-sm);
-  padding: 6px 14px;
+  padding: 5px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -200,7 +200,7 @@
 }
 
 .opening-logo-img {
-  height: 44px;
+  height: 46px;
   width: auto;
   object-fit: contain;
   display: block;

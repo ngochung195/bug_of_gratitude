@@ -68,7 +68,7 @@ export function createCinematicIntroScreen({ onComplete } = {}) {
   const brandPill = document.createElement('div');
   brandPill.className = 'cinematic-brand-pill';
   brandPill.innerHTML = `
-    <img src="${APP_CONFIG.BRAND_LOGOS.WORDMARK}" alt="CodeGym Logo" />
+    <img src="${APP_CONFIG.BRAND_LOGOS.ICON}" alt="CodeGym Logo" />
     <span class="cinematic-time-badge">21:15 // CODEGYM HEADQUARTERS</span>
   `;
   const timeBadgeEl = brandPill.querySelector('.cinematic-time-badge');

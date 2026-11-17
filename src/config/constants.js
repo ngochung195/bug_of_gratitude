@@ -16,7 +16,7 @@ export const APP_CONFIG = {
   REACTION_STORAGE_KEY: 'bog_reacted_messages_v2',
   BRAND_LOGOS: {
     ICON: '/assets/images/brand/codegym-icon.png',
-    WORDMARK: '/assets/images/brand/codegym-wordmark.png',
+    WORDMARK: '/assets/images/brand/codegym-icon.png',
     FULL_SLOGAN: '/assets/images/brand/codegym-full-slogan.png',
   },
 };

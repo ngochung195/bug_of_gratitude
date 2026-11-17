@@ -57,7 +57,7 @@ export function createIntroScreen({ onNavigate } = {}) {
   brandHeader.innerHTML = `
     <div class="opening-logo-frame">
       <img
-        src="${APP_CONFIG.BRAND_LOGOS.WORDMARK}"
+        src="${APP_CONFIG.BRAND_LOGOS.ICON}"
         alt="CodeGym Official Logo"
         class="opening-logo-img"
       />
