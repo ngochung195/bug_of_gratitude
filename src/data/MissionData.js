@@ -3,12 +3,18 @@ export const MISSIONS = [
     id: 'mission-01',
     order: 1,
     stationId: 'mission-station-1',
+    sectorId: 'sector-it-office',
+    location: 'IT OFFICE',
     code: 'BUG #001',
     title: 'MISSION 01 – THE FIRST LOOP',
+    investigationTitle: 'NHIỆM VỤ 1 – THE BROKEN PROCESS',
     topic: 'Java For Loop',
     type: 'code-fix',
     story:
-      'Module đếm tiến trình khởi tạo của phòng Lab đang bị treo. Đáng lẽ hệ thống phải in ra các số từ 0 đến 5 rồi dừng lại, nhưng giá trị biến đếm i lại giảm xuống âm vô tận.',
+      'Một máy tính tại phòng IT đang chạy chương trình xử lý dữ liệu bất thường. Nhật ký hệ thống cho thấy một vòng lặp bị chỉnh sửa.',
+    clueLog: 'Process terminated unexpectedly. Check iteration counter.',
+    restorationMessage: 'Tiến trình tại IT OFFICE đã được khôi phục. Mở khóa khu vực tiếp theo: DATABASE ROOM.',
+    hackerMessageAfter: 'Không tệ. Nhưng đây mới chỉ là lỗi đầu tiên.',
     codeSnippet: [
       'public class BootCounter {',
       '    public static void main(String[] args) {',
@@ -66,13 +72,19 @@ export const MISSIONS = [
     id: 'mission-02',
     order: 2,
     stationId: 'mission-station-2',
+    sectorId: 'sector-database-room',
+    location: 'DATABASE ROOM',
     code: 'BUG #002',
     name: 'NULL NIGHTMARE',
     title: 'MISSION 02 – NULL NIGHTMARE',
+    investigationTitle: 'NHIỆM VỤ 2 – NULL NIGHTMARE',
     topic: 'NullPointerException',
     type: 'code-fix',
     story:
-      'Hệ thống định danh học viên đột ngột văng lỗi java.lang.NullPointerException ngay khi vừa truy vấn độ dài tên người dùng.',
+      'Một số truy vấn dữ liệu trả về giá trị không hợp lệ. Hệ thống bị lỗi khi truy cập dữ liệu rỗng.',
+    clueLog: 'Database connection established. Object reference unavailable.',
+    restorationMessage: 'Đã khôi phục kết nối cơ sở dữ liệu tại DATABASE ROOM. Mở khóa khu vực tiếp theo: SERVER ROOM.',
+    hackerMessageAfter: 'Dữ liệu có thể bị mất, nhưng những gì bạn học được thì không.',
     codeSnippet: [
       'public class StudentProfile {',
       '    public static void main(String[] args) {',
@@ -129,12 +141,18 @@ export const MISSIONS = [
     id: 'mission-03',
     order: 3,
     stationId: 'mission-station-3',
+    sectorId: 'sector-server-room',
+    location: 'SERVER ROOM',
     code: 'BUG #003',
     title: 'MISSION 03 – INFINITE DEADLINE',
+    investigationTitle: 'NHIỆM VỤ 3 – INFINITE DEADLINE',
     topic: 'Infinite Loop',
     type: 'code-fix',
     story:
-      'Tiến trình kiểm tra bài tập đang làm CPU quá tải 100%. Vòng lặp while in ra số 0 liên tục không bao giờ kết thúc.',
+      'Máy chủ liên tục xử lý một tác vụ không có điểm dừng. CPU tăng cao và hệ thống bắt đầu quá tải.',
+    clueLog: 'Warning: CPU usage critical. Process has no termination condition.',
+    restorationMessage: 'Máy chủ tại SERVER ROOM đã hoạt động trở lại bình thường. Mở khóa khu vực tiếp theo: SECURITY ROOM.',
+    hackerMessageAfter: 'Bạn đã khôi phục được máy chủ. Nhưng liệu bạn có hiểu điều gì thực sự quan trọng?',
     codeSnippet: [
       'int count = 0;',
       '',
@@ -186,12 +204,21 @@ export const MISSIONS = [
     id: 'mission-04',
     order: 4,
     stationId: 'mission-station-4',
+    sectorId: 'sector-security-room',
+    location: 'SECURITY ROOM',
     code: 'BUG #004',
     title: "MISSION 04 – THE MENTOR'S VOICE",
+    investigationTitle: "NHIỆM VỤ 4 – THE MENTOR'S VOICE",
     topic: 'Những lời dạy quen thuộc của Mentor',
     type: 'mentor-quiz',
     story:
-      'Trạm Terminal Delta lưu trữ bộ nhớ âm thanh của những buổi review code. Để mở khóa trạm cuối cùng, bạn cần thấu hiểu ý nghĩa thực sự đằng sau những câu nói quen thuộc của thầy cô và Mentor CodeGym.',
+      'Người chơi tìm thấy một thiết bị ghi âm và một tập tin được mã hóa. Trong tập tin có những đoạn ghi âm từ một người từng hướng dẫn người chơi trong quá trình học lập trình.',
+    clueLog:
+      'Đừng chỉ học cách viết code. Hãy học cách hiểu vấn đề, kiên nhẫn và giúp đỡ những người xung quanh.',
+    restorationMessage:
+      'Đã giải mã thành công tập tin ghi âm và nhận được Mã truy cập PHÒNG ĐIỀU HÀNH TRUNG TÂM (CENTRAL CONTROL ROOM)!',
+    hackerMessageAfter:
+      'Bạn đã tìm thấy tất cả manh mối. Hãy đến phòng điều hành trung tâm.',
     questions: [
       {
         id: 'q1',

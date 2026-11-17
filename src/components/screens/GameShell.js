@@ -1,7 +1,9 @@
 import { APP_CONFIG, EVENTS } from '../../config/constants.js';
 import { eventBus } from '../../core/EventBus.js';
 import { SECTOR_STATUS } from '../../data/labEnvironment.js';
+import { audioManager } from '../../systems/AudioManager.js';
 import { investigationSystem } from '../../systems/InvestigationSystem.js';
+import { lastBugController } from '../../systems/LastBugController.js';
 import { missionManager } from '../../systems/MissionManager.js';
 import { ICONS } from '../../utils/icons.js';
 import { createButton } from '../Button.js';
@@ -282,6 +284,77 @@ export function createGameShell({ soundEnabled = true } = {}) {
   };
 
   // =========================================================================
+  // 5B. HACKER TRANSMISSION MODAL (APPEARS SEQUENTIALLY AFTER EACH MISSION)
+  // =========================================================================
+  let pendingHackerTransmission = null;
+
+  const hackerModalBody = document.createElement('div');
+  hackerModalBody.className = 'about-list';
+
+  const enterCentralControlBtn = createButton({
+    label: 'ĐẾN PHÒNG ĐIỀU HÀNH TRUNG TÂM',
+    variant: 'warm',
+    iconSvg: ICONS.PLAY,
+  });
+  enterCentralControlBtn.element.style.display = 'none';
+
+  const closeHackerBtn = createButton({
+    label: 'TIẾP TỤC ĐIỀU TRA [SPACE / ENTER]',
+    variant: 'primary',
+  });
+
+  const hackerModal = createModal({
+    title: 'UNKNOWN HACKER // TIN NHẮN XÂM NHẬP',
+    content: hackerModalBody,
+    footerButtons: [enterCentralControlBtn, closeHackerBtn],
+    closeOnBackdrop: false,
+    onClose: () => {
+      eventBus.emit(EVENTS.GAME_PAUSE_TOGGLED, { paused: false });
+    },
+  });
+
+  closeHackerBtn.element.addEventListener('click', () => {
+    hackerModal.close();
+  });
+
+  enterCentralControlBtn.element.addEventListener('click', () => {
+    hackerModal.close();
+    lastBugController.tryTrigger(350);
+  });
+
+  const showHackerTransmissionModal = (payload) => {
+    if (!payload) return;
+    audioManager.playCriticalAlert();
+
+    const titleEl = hackerModal.element.querySelector('.bog-modal__title');
+    if (titleEl) {
+      titleEl.textContent = `UNKNOWN HACKER // TÍN HIỆU #0${payload.order || 1}`;
+    }
+
+    hackerModalBody.innerHTML = `
+      <div style="font-family: var(--font-mono); font-size: 0.76rem; color: #10b981; margin-bottom: 8px;">
+        ✔ ${payload.restorationMessage || 'Đã khôi phục sự cố kỹ thuật thành công.'}
+      </div>
+      <div class="about-highlight" style="border-left-color: #f43f5e; background: rgba(30, 10, 24, 0.85); padding: 14px; font-size: 1.02rem; line-height: 1.65; color: #fecdd3;">
+        <div style="font-family: var(--font-pixel); font-size: 0.72rem; color: #f43f5e; margin-bottom: 8px;">
+          [ENCRYPTED MESSAGE FROM: UNKNOWN HACKER]
+        </div>
+        "${payload.hackerMessage}"
+      </div>
+    `;
+
+    enterCentralControlBtn.element.style.display = payload.isFinalClue
+      ? 'inline-flex'
+      : 'none';
+    closeHackerBtn.setContent(
+      payload.isFinalClue ? 'TỰ DI CHUYỂN ĐẾN PHÒNG ĐIỀU HÀNH' : 'TIẾP TỤC ĐIỀU TRA [SPACE / ENTER]'
+    );
+
+    hackerModal.open();
+    eventBus.emit(EVENTS.GAME_PAUSE_TOGGLED, { paused: true });
+  };
+
+  // =========================================================================
   // 6. MISSION LOG & SECTOR STATUS MODAL
   // =========================================================================
   const missionLogBody = document.createElement('div');
@@ -487,11 +560,16 @@ export function createGameShell({ soundEnabled = true } = {}) {
     eventBus.emit(EVENTS.GAME_EXIT_REQUESTED);
   });
 
-  // Space / Enter closes the Inspection Modal when open
+  // Space / Enter closes the Inspection Modal or Hacker Modal when open
   const handleShellKeyDown = (e) => {
-    if ((e.key === ' ' || e.key === 'Enter') && inspectionModal.isOpen()) {
-      e.preventDefault();
-      inspectionModal.close();
+    if (e.key === ' ' || e.key === 'Enter') {
+      if (inspectionModal.isOpen()) {
+        e.preventDefault();
+        inspectionModal.close();
+      } else if (hackerModal.isOpen()) {
+        e.preventDefault();
+        hackerModal.close();
+      }
     }
   };
   window.addEventListener('keydown', handleShellKeyDown);
@@ -499,6 +577,28 @@ export function createGameShell({ soundEnabled = true } = {}) {
   // =========================================================================
   // 8. EVENT BUS SUBSCRIPTIONS
   // =========================================================================
+  unsubscribers.push(
+    eventBus.on(EVENTS.HACKER_MESSAGE_RECEIVED, (payload) => {
+      if (missionUI.isOpen()) {
+        pendingHackerTransmission = payload;
+      } else {
+        showHackerTransmissionModal(payload);
+      }
+    })
+  );
+
+  unsubscribers.push(
+    eventBus.on(EVENTS.MISSION_MODAL_TOGGLED, ({ isOpen }) => {
+      if (!isOpen && pendingHackerTransmission) {
+        const nextPayload = pendingHackerTransmission;
+        pendingHackerTransmission = null;
+        window.setTimeout(() => {
+          showHackerTransmissionModal(nextPayload);
+        }, 180);
+      }
+    })
+  );
+
   unsubscribers.push(
     eventBus.on(EVENTS.MISSION_UPDATED, () => {
       syncHudTelemetry();
@@ -560,6 +660,10 @@ export function createGameShell({ soundEnabled = true } = {}) {
       }
 
       if (target.type === 'npc') {
+        if (missionManager.isAllCompleted() && !lastBugController.hasTriggered) {
+          lastBugController.tryTrigger(350);
+          return;
+        }
         const guidance = missionManager.getMentorGuidance();
         interactionDialog.update({
           newBadge: `${target.code} // GUIDANCE`,
@@ -580,6 +684,7 @@ export function createGameShell({ soundEnabled = true } = {}) {
   shell.appendChild(bottomHud);
   shell.appendChild(missionUI.element);
   shell.appendChild(inspectionModal.element);
+  shell.appendChild(hackerModal.element);
   shell.appendChild(missionLogModal.element);
   shell.appendChild(pauseModal.element);
 

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { notification } from '../components/Notification.js';
 import { EVENTS, SCENE_KEYS } from '../config/constants.js';
 import { eventBus } from '../core/EventBus.js';
 import {
@@ -11,6 +12,7 @@ import {
   WORLD_HEIGHT,
   WORLD_WIDTH,
 } from '../data/labEnvironment.js';
+import { audioManager } from '../systems/AudioManager.js';
 import { InputManager } from '../systems/InputManager.js';
 import { InteractionSystem } from '../systems/InteractionSystem.js';
 import {
@@ -27,8 +29,10 @@ export class GameScene extends Phaser.Scene {
     this.inputManager = null;
     this.interactionSystem = null;
     this.obstaclesGroup = null;
+    this.doorGates = new Map();
     this.sectorBorders = new Map();
     this.sectorStatusTexts = new Map();
+    this.lastDoorNoticeTime = 0;
     this.isPaused = false;
     this.isLastBugLocked = false;
     this.unsubscribers = [];
@@ -37,6 +41,7 @@ export class GameScene extends Phaser.Scene {
   create() {
     this.isPaused = false;
     this.isLastBugLocked = false;
+    this.doorGates.clear();
     this.sectorBorders.clear();
     this.sectorStatusTexts.clear();
 
@@ -56,6 +61,7 @@ export class GameScene extends Phaser.Scene {
     this.drawRoomSigns();
     this.placeOfficialBrandElements();
     this.createPixelArtFurnitureObstacles();
+    this.createDoorSecurityGates();
 
     this.interactionSystem = new InteractionSystem(this, INTERACTABLE_OBJECTS);
     this.playerController = new PlayerController(this);
@@ -66,6 +72,28 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.playerController.sprite, true, 0.14, 0.14);
 
     this.physics.add.collider(this.playerController.sprite, this.obstaclesGroup);
+
+    // Colliders for locked doorways
+    this.doorGates.forEach((gate) => {
+      this.physics.add.collider(
+        this.playerController.sprite,
+        gate.rect,
+        () => {
+          const now = Date.now();
+          if (now - this.lastDoorNoticeTime > 2200) {
+            this.lastDoorNoticeTime = now;
+            audioManager.playError();
+            const reason = investigationSystem.getSectorLockReason(gate.door.sectorId);
+            notification.show({
+              message: reason,
+              type: 'warm',
+              duration: 3200,
+            });
+          }
+        },
+        () => !investigationSystem.isSectorUnlocked(gate.door.sectorId)
+      );
+    });
 
     const interactSprites = this.interactionSystem.getStaticSprites();
     interactSprites.forEach((staticSprite) => {
@@ -78,6 +106,7 @@ export class GameScene extends Phaser.Scene {
 
     this.registerBusListeners();
     this.syncSectorVisuals();
+    this.syncDoorGates();
 
     const startPos = this.playerController.getPosition();
     investigationSystem.updatePlayerPosition(startPos.x, startPos.y);
@@ -91,7 +120,6 @@ export class GameScene extends Phaser.Scene {
     SECTORS.forEach((sec) => {
       const cx = sec.x + sec.width / 2;
 
-      // Room Name Signboard mounted on the North Wall Face
       this.add
         .text(cx, sec.y + 15, `${sec.name} — ${sec.viName}`, {
           fontFamily: 'Be Vietnam Pro, sans-serif',
@@ -136,16 +164,69 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  /**
-   * Renders all walls, desks, bookshelves, and server racks as 2.5D Pixel Art furniture.
-   */
+  createDoorSecurityGates() {
+    ROOM_DOORS.forEach((door) => {
+      const gateRect = this.add.rectangle(
+        door.x,
+        door.y,
+        door.width,
+        door.height,
+        0xef4444,
+        0.55
+      );
+      gateRect.setStrokeStyle(1.5, 0xfef08a, 0.9);
+      gateRect.setDepth(3.1);
+      this.physics.add.existing(gateRect, true);
+
+      const gateLabel = this.add
+        .text(door.x, door.y, door.label, {
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: '8px',
+          fontStyle: 'bold',
+          color: '#ffffff',
+          backgroundColor: 'rgba(15, 23, 42, 0.78)',
+          padding: { x: 3, y: 1 },
+        })
+        .setOrigin(0.5)
+        .setDepth(3.3);
+
+      this.doorGates.set(door.id, {
+        door,
+        rect: gateRect,
+        label: gateLabel,
+      });
+    });
+  }
+
+  syncDoorGates() {
+    this.doorGates.forEach(({ door, rect, label }) => {
+      const unlocked = investigationSystem.isSectorUnlocked(door.sectorId);
+      if (unlocked) {
+        rect.setFillStyle(0x10b981, 0.18);
+        rect.setStrokeStyle(1, 0x10b981, 0.55);
+        label.setText(`${door.label} [OPEN]`);
+        label.setColor('#a7f3d0');
+        if (rect.body) {
+          rect.body.enable = false;
+        }
+      } else {
+        rect.setFillStyle(0xef4444, 0.65);
+        rect.setStrokeStyle(2, 0xfca5a5, 0.95);
+        label.setText(`${door.label} [LOCKED]`);
+        label.setColor('#fecdd3');
+        if (rect.body) {
+          rect.body.enable = true;
+        }
+      }
+    });
+  }
+
   createPixelArtFurnitureObstacles() {
     this.obstaclesGroup = this.physics.add.staticGroup();
     const gFurn = this.add.graphics();
     gFurn.setDepth(3);
 
     LAB_OBSTACLES.forEach((obs) => {
-      // Invisible physics body for collision
       const physRect = this.add.rectangle(
         obs.x,
         obs.y,
@@ -163,7 +244,6 @@ export class GameScene extends Phaser.Scene {
       const h = obs.height;
 
       if (obs.kind === 'wall') {
-        // 3/4 Interior Wall with White Top Cap & Dark Outline
         gFurn.fillStyle(0x64748b, 1);
         gFurn.fillRect(left, top, w, h);
         gFurn.fillStyle(0xf8fafc, 1);
@@ -171,14 +251,11 @@ export class GameScene extends Phaser.Scene {
         gFurn.lineStyle(2, 0x18181b, 1);
         gFurn.strokeRect(left, top, w, h);
       } else if (obs.kind === 'desk') {
-        // 2.5D Wooden Office Cubicle Desk + Rolling Chairs + Monitors
-        // Cubicle back partition
         gFurn.fillStyle(0xcbd5e1, 1);
         gFurn.fillRect(left, top - 6, w, 6);
         gFurn.lineStyle(1.5, 0x18181b, 1);
         gFurn.strokeRect(left, top - 6, w, 6);
 
-        // Wooden Desk Top (#d4a373) & Front Apron (#9c6644)
         gFurn.fillStyle(0xd4a373, 1);
         gFurn.fillRect(left, top, w, h * 0.65);
         gFurn.fillStyle(0x9c6644, 1);
@@ -186,32 +263,26 @@ export class GameScene extends Phaser.Scene {
         gFurn.lineStyle(2, 0x18181b, 1);
         gFurn.strokeRect(left, top, w, h);
 
-        // Two Workstations on the Desk (Monitors, Keyboards, Chairs)
         const stations = [left + w * 0.28, left + w * 0.72];
         stations.forEach((sx) => {
-          // Swivel Chair below desk
           gFurn.fillStyle(0x334155, 1);
           gFurn.fillRoundedRect(sx - 10, top + h + 2, 20, 12, 4);
           gFurn.lineStyle(1.5, 0x18181b, 1);
           gFurn.strokeRoundedRect(sx - 10, top + h + 2, 20, 12, 4);
 
-          // Blue Monitor
           gFurn.fillStyle(0x1e293b, 1);
           gFurn.fillRect(sx - 11, top + 3, 22, 12);
           gFurn.fillStyle(0x38bdf8, 1);
           gFurn.fillRect(sx - 9, top + 5, 18, 8);
-          // Keyboard
           gFurn.fillStyle(0xf8fafc, 1);
           gFurn.fillRect(sx - 7, top + 18, 14, 4);
         });
       } else if (obs.kind === 'cabinet') {
-        // 2.5D Tall Wooden Bookshelf / Filing Cabinet with Colorful Books (like bottom-left of reference)
         gFurn.fillStyle(0x7f4f24, 1);
         gFurn.fillRect(left, top, w, h);
         gFurn.lineStyle(2, 0x18181b, 1);
         gFurn.strokeRect(left, top, w, h);
 
-        // 2 Horizontal Shelf Recesses with Colorful Books
         const shelfColors = [0xef4444, 0x3b82f6, 0x22c55e, 0xfacc15, 0xa855f7, 0xf97316];
         [top + 6, top + 22].forEach((sy, sIdx) => {
           gFurn.fillStyle(0x432818, 1);
@@ -223,30 +294,25 @@ export class GameScene extends Phaser.Scene {
           }
         });
       } else if (obs.kind === 'server') {
-        // 2.5D Tall Black Server Rack Tower with Blinking Red/Green LEDs (like bottom-right of reference)
         gFurn.fillStyle(0x272a34, 1);
         gFurn.fillRect(left, top, w, h);
         gFurn.lineStyle(2, 0x111318, 1);
         gFurn.strokeRect(left, top, w, h);
 
-        // Server Rack Units
         const bayWidth = (w - 16) / 2;
         [left + 6, left + 10 + bayWidth].forEach((bx) => {
           gFurn.fillStyle(0x16181f, 1);
           gFurn.fillRect(bx, top + 5, bayWidth, h - 10);
           for (let ry = top + 9; ry < top + h - 8; ry += 8) {
-            // Red & Green Status LEDs
             gFurn.fillStyle(0xef4444, 1);
             gFurn.fillCircle(bx + 5, ry + 2, 1.8);
             gFurn.fillStyle(0x10b981, 1);
             gFurn.fillCircle(bx + 11, ry + 2, 1.8);
-            // Ventilation slot
             gFurn.fillStyle(0x3f3f46, 1);
             gFurn.fillRect(bx + 17, ry + 1, Math.max(8, bayWidth - 22), 3);
           }
         });
       } else if (obs.kind === 'pillar') {
-        // 2.5D Architectural Pillar
         gFurn.fillStyle(0x94a3b8, 1);
         gFurn.fillRect(left, top, w, h);
         gFurn.fillStyle(0xf8fafc, 1);
@@ -262,9 +328,10 @@ export class GameScene extends Phaser.Scene {
     sectorsWithStatus.forEach((sec) => {
       const statusText = this.sectorStatusTexts.get(sec.id);
       const label = SECTOR_STATUS_LABELS[sec.status] || sec.status;
+      const lockSuffix = sec.isUnlocked ? '' : ' • KHÓA';
 
       if (statusText) {
-        statusText.setText(`[${label.toUpperCase()}]`);
+        statusText.setText(`[${label.toUpperCase()}${lockSuffix}]`);
         if (sec.status === SECTOR_STATUS.RESTORED) {
           statusText.setColor('#10b981');
         } else if (sec.status === SECTOR_STATUS.ANOMALY_DETECTED) {
@@ -312,7 +379,15 @@ export class GameScene extends Phaser.Scene {
     };
 
     this.unsubscribers.push(
+      eventBus.on(EVENTS.MISSION_UPDATED, () => {
+        this.syncDoorGates();
+        this.syncSectorVisuals();
+      })
+    );
+
+    this.unsubscribers.push(
       eventBus.on(EVENTS.SECTOR_STATUS_UPDATED, () => {
+        this.syncDoorGates();
         this.syncSectorVisuals();
       })
     );
@@ -324,7 +399,7 @@ export class GameScene extends Phaser.Scene {
     );
 
     this.unsubscribers.push(
-      eventBus.on(EVENTS.ALL_MISSIONS_COMPLETED, () => {
+      eventBus.on(EVENTS.LAST_BUG_TRIGGERED, () => {
         if (this.isLastBugLocked) return;
         this.isLastBugLocked = true;
         this.isPaused = true;
@@ -360,6 +435,7 @@ export class GameScene extends Phaser.Scene {
           const pos = this.playerController.getPosition();
           investigationSystem.updatePlayerPosition(pos.x, pos.y);
         }
+        this.syncDoorGates();
         this.syncSectorVisuals();
       })
     );

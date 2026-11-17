@@ -325,12 +325,12 @@ export function createMissionUI() {
     retryBtn.element.style.display = 'none';
 
     if (titleEl) {
-      titleEl.textContent = `${mission.code} // ${mission.title}`;
+      titleEl.textContent = `${mission.code} // ${mission.investigationTitle || mission.title}`;
     }
 
     bodyContainer.innerHTML = '';
 
-    // Meta bar with Remaining Attempts counter
+    // Meta bar with Location & Remaining Attempts counter
     const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
     const remaining = missionManager.getRemainingAttempts();
     const maxAttempts = APP_CONFIG.MAX_WRONG_ATTEMPTS;
@@ -338,7 +338,7 @@ export function createMissionUI() {
     const metaBar = document.createElement('div');
     metaBar.className = 'mission-meta-bar';
     metaBar.innerHTML = `
-      <span class="mission-meta-bar__topic">TOPIC: ${mission.topic}</span>
+      <span class="mission-meta-bar__topic">LOCATION: ${mission.location || 'CODEGYM HQ'} • TOPIC: ${mission.topic}</span>
       <div class="mission-meta-bar__badges">
         <span class="mission-meta-bar__attempts ${
           remaining <= 1 ? 'mission-meta-bar__attempts--danger' : ''
@@ -364,6 +364,21 @@ export function createMissionUI() {
     storyEl.className = 'mission-story';
     storyEl.textContent = mission.story;
     bodyContainer.appendChild(storyEl);
+
+    // System Log / Clue Box
+    if (mission.clueLog) {
+      const clueBox = document.createElement('div');
+      clueBox.className = 'about-highlight';
+      clueBox.style.cssText =
+        'margin-bottom: 14px; font-family: var(--font-mono); font-size: 0.84rem; border-left: 3px solid var(--color-warm-gold-bright); background: rgba(15, 23, 42, 0.85); padding: 10px 14px;';
+      clueBox.innerHTML = `
+        <div style="font-size: 0.72rem; color: var(--color-warm-gold-bright); font-weight: 700; margin-bottom: 4px;">
+          [MANH MỐI & NHẬT KÝ HỆ THỐNG PHÁT HIỆN TẠI ${mission.location || 'TRẠM'}]:
+        </div>
+        <div style="color: #fef3c7;">"${mission.clueLog}"</div>
+      `;
+      bodyContainer.appendChild(clueBox);
+    }
 
     // Feedback Banner placed prominently above options & scrolled into view when triggered
     const feedbackBanner = document.createElement('div');
@@ -475,7 +490,9 @@ export function createMissionUI() {
         }
 
         feedbackBanner.className = 'mission-feedback mission-feedback--success is-visible';
-        feedbackBanner.textContent = result.feedback;
+        feedbackBanner.textContent = result.restorationMessage
+          ? `${result.feedback} — ${result.restorationMessage}`
+          : result.feedback;
         submitBtn.setDisabled(true);
         submitBtn.setContent('PATCH APPLIED', ICONS.TERMINAL);
         feedbackBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

@@ -100,6 +100,15 @@ export class UIManager {
   showScreen(screenKey) {
     if (!this.root) return;
 
+    // Guard against skipping mandatory missions to reach LAST_BUG prematurely
+    if (screenKey === UI_SCREENS.LAST_BUG && !missionManager.isAllCompleted()) {
+      notification.show({
+        message: 'Bạn cần hoàn thành cả 4 nhiệm vụ điều tra trước khi mở khóa chương cuối!',
+        type: 'warm',
+      });
+      return;
+    }
+
     const mountNextScreen = () => {
       if (this.currentScreen && typeof this.currentScreen.destroy === 'function') {
         this.currentScreen.destroy();

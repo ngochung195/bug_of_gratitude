@@ -10,6 +10,15 @@ export const SECTOR_STATUS_LABELS = {
   [SECTOR_STATUS.RESTORED]: 'Đã khôi phục',
 };
 
+const SECTOR_PREREQUISITE_MISSION = {
+  'sector-reception': null,
+  'sector-it-office': null,
+  'sector-database-room': 'mission-01',
+  'sector-server-room': 'mission-02',
+  'sector-security-room': 'mission-03',
+  'sector-central-control': 'mission-04',
+};
+
 export class InvestigationSystem {
   constructor({
     sectors = SECTORS,
@@ -34,45 +43,72 @@ export class InvestigationSystem {
     });
   }
 
+  /**
+   * Checks whether a sector's door is unlocked based on mission progression:
+   * - IT OFFICE & RECEPTION: unlocked initially
+   * - DATABASE ROOM: requires Mission 1 completed
+   * - SERVER ROOM: requires Mission 2 completed
+   * - SECURITY ROOM: requires Mission 3 completed
+   * - CENTRAL CONTROL ROOM: requires Mission 4 (all 4 missions) completed
+   */
+  isSectorUnlocked(sectorId) {
+    const reqMissionId = SECTOR_PREREQUISITE_MISSION[sectorId];
+    if (!reqMissionId) return true;
+    return (
+      this.missionManager.getMissionStatus(reqMissionId) ===
+      MISSION_STATUS.COMPLETED
+    );
+  }
+
+  getSectorLockReason(sectorId) {
+    if (this.isSectorUnlocked(sectorId)) return '';
+    if (sectorId === 'sector-central-control') {
+      return 'CỬA PHÒNG ĐIỀU HÀNH TRUNG TÂM ĐANG KHÓA: Hãy hoàn thành cả 4 nhiệm vụ điều tra (đặc biệt là lấy mã truy cập tại SECURITY ROOM) để mở khóa!';
+    }
+    const reqMissionId = SECTOR_PREREQUISITE_MISSION[sectorId];
+    const reqMission = this.missionManager.getMissionById(reqMissionId);
+    if (reqMission) {
+      return `Khu vực này đang bị khóa an ninh. Hãy khôi phục sự cố tại ${reqMission.location || reqMission.title} (${reqMission.code}) trước!`;
+    }
+    return 'Khu vực này hiện đang khóa.';
+  }
+
+  computeSectorStatus(sec) {
+    const isExplored = this.missionManager.isSectorExplored(sec.id);
+
+    // Rule (Section 6): Unexplored sectors must NEVER be marked completed/restored
+    if (!isExplored) {
+      return SECTOR_STATUS.UNEXPLORED;
+    }
+
+    if (sec.missionId) {
+      const mStatus = this.missionManager.getMissionStatus(sec.missionId);
+      return mStatus === MISSION_STATUS.COMPLETED
+        ? SECTOR_STATUS.RESTORED
+        : SECTOR_STATUS.ANOMALY_DETECTED;
+    }
+
+    if (sec.id === 'sector-central-control') {
+      return this.missionManager.isAllCompleted()
+        ? SECTOR_STATUS.RESTORED
+        : SECTOR_STATUS.EXPLORED;
+    }
+
+    return SECTOR_STATUS.EXPLORED;
+  }
+
   initStates() {
     this.sectors.forEach((sec) => {
-      if (sec.missionId) {
-        const mStatus = this.missionManager.getMissionStatus(sec.missionId);
-        this.statusBySectorId[sec.id] =
-          mStatus === MISSION_STATUS.COMPLETED
-            ? SECTOR_STATUS.RESTORED
-            : SECTOR_STATUS.UNEXPLORED;
-      } else if (sec.id === 'sector-reception') {
-        this.statusBySectorId[sec.id] = this.missionManager.isAllCompleted()
-          ? SECTOR_STATUS.RESTORED
-          : SECTOR_STATUS.EXPLORED;
-      } else {
-        this.statusBySectorId[sec.id] = this.missionManager.isAllCompleted()
-          ? SECTOR_STATUS.RESTORED
-          : SECTOR_STATUS.UNEXPLORED;
-      }
+      this.statusBySectorId[sec.id] = this.computeSectorStatus(sec);
     });
   }
 
   syncWithMissionStates() {
     let changed = false;
-    const allFixed = this.missionManager.isAllCompleted();
 
     this.sectors.forEach((sec) => {
       const prev = this.statusBySectorId[sec.id];
-      let next = prev;
-
-      if (sec.missionId) {
-        const mStatus = this.missionManager.getMissionStatus(sec.missionId);
-        if (mStatus === MISSION_STATUS.COMPLETED) {
-          next = SECTOR_STATUS.RESTORED;
-        } else if (prev === SECTOR_STATUS.RESTORED) {
-          next = SECTOR_STATUS.ANOMALY_DETECTED;
-        }
-      } else if (allFixed) {
-        next = SECTOR_STATUS.RESTORED;
-      }
-
+      const next = this.computeSectorStatus(sec);
       if (next !== prev) {
         this.statusBySectorId[sec.id] = next;
         changed = true;
@@ -98,20 +134,11 @@ export class InvestigationSystem {
     const sector = this.getSectorAtPosition(x, y);
     const nextSectorId = sector ? sector.id : 'corridor';
 
-    if (sector) {
-      const currentStatus = this.statusBySectorId[sector.id];
-      if (currentStatus === SECTOR_STATUS.UNEXPLORED) {
-        if (sector.missionId) {
-          const mStatus = this.missionManager.getMissionStatus(sector.missionId);
-          this.statusBySectorId[sector.id] =
-            mStatus === MISSION_STATUS.COMPLETED
-              ? SECTOR_STATUS.RESTORED
-              : SECTOR_STATUS.ANOMALY_DETECTED;
-        } else {
-          this.statusBySectorId[sector.id] = this.missionManager.isAllCompleted()
-            ? SECTOR_STATUS.RESTORED
-            : SECTOR_STATUS.EXPLORED;
-        }
+    if (sector && this.isSectorUnlocked(sector.id)) {
+      const newlyExplored = this.missionManager.markSectorExplored(sector.id);
+      const nextStatus = this.computeSectorStatus(sector);
+      if (newlyExplored || this.statusBySectorId[sector.id] !== nextStatus) {
+        this.statusBySectorId[sector.id] = nextStatus;
         this.emitStatusUpdate();
       }
     }
@@ -125,7 +152,9 @@ export class InvestigationSystem {
           name: 'MAIN CORRIDOR',
           viName: 'Hành lang Kết nối',
         },
-        status: sector ? this.statusBySectorId[sector.id] : SECTOR_STATUS.EXPLORED,
+        status: sector
+          ? this.statusBySectorId[sector.id]
+          : SECTOR_STATUS.EXPLORED,
       });
     }
 
@@ -138,18 +167,11 @@ export class InvestigationSystem {
       this.inspectedObjectIds.add(targetConfig.id);
     }
 
-    if (targetConfig.sectorId && this.statusBySectorId[targetConfig.sectorId]) {
+    if (targetConfig.sectorId && this.isSectorUnlocked(targetConfig.sectorId)) {
+      this.missionManager.markSectorExplored(targetConfig.sectorId);
       const sec = this.sectors.find((s) => s.id === targetConfig.sectorId);
       if (sec) {
-        if (sec.missionId) {
-          const mStatus = this.missionManager.getMissionStatus(sec.missionId);
-          this.statusBySectorId[sec.id] =
-            mStatus === MISSION_STATUS.COMPLETED
-              ? SECTOR_STATUS.RESTORED
-              : SECTOR_STATUS.ANOMALY_DETECTED;
-        } else if (this.statusBySectorId[sec.id] === SECTOR_STATUS.UNEXPLORED) {
-          this.statusBySectorId[sec.id] = SECTOR_STATUS.EXPLORED;
-        }
+        this.statusBySectorId[sec.id] = this.computeSectorStatus(sec);
         this.emitStatusUpdate();
       }
     }
@@ -169,9 +191,11 @@ export class InvestigationSystem {
   getAllSectorsWithStatus() {
     return this.sectors.map((sec) => {
       const status = this.getSectorStatus(sec.id);
+      const isUnlocked = this.isSectorUnlocked(sec.id);
       return {
         ...sec,
         status,
+        isUnlocked,
         statusLabel: SECTOR_STATUS_LABELS[status] || status,
       };
     });
@@ -199,7 +223,7 @@ export class InvestigationSystem {
     const resolved = this.getResolvedIncidentsCount();
     const total = this.getTotalIncidentsCount();
     if (resolved >= total) {
-      return 'RESTORED // ONLINE';
+      return 'CENTRAL CONTROL UNLOCKED (4/4)';
     }
     return `COMPROMISED (${resolved}/${total})`;
   }
@@ -225,4 +249,3 @@ export class InvestigationSystem {
 
 export const investigationSystem = new InvestigationSystem();
 export default InvestigationSystem;
-

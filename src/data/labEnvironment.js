@@ -113,12 +113,12 @@ export const SECTORS = [
 
 // Doors connecting rooms to the central grid corridors (walk-through sensor thresholds)
 export const ROOM_DOORS = [
-  { id: 'door-reception-north', x: 816, y: 680, width: 120, height: 18, label: 'CỬA LỄ TÂN' },
-  { id: 'door-central-south', x: 816, y: 382, width: 120, height: 18, label: 'CỬA ĐIỀU HÀNH' },
-  { id: 'door-it-east', x: 512, y: 280, width: 18, height: 110, label: 'CỬA IT OFFICE' },
-  { id: 'door-db-west', x: 1120, y: 280, width: 18, height: 110, label: 'CỬA DATABASE' },
-  { id: 'door-server-east', x: 512, y: 740, width: 18, height: 110, label: 'CỬA SERVER ROOM' },
-  { id: 'door-security-west', x: 1120, y: 740, width: 18, height: 110, label: 'CỬA SECURITY ROOM' },
+  { id: 'door-reception-north', sectorId: 'sector-reception', x: 816, y: 680, width: 120, height: 18, label: 'CỬA LỄ TÂN' },
+  { id: 'door-central-south', sectorId: 'sector-central-control', x: 816, y: 382, width: 120, height: 18, label: 'CỬA ĐIỀU HÀNH' },
+  { id: 'door-it-east', sectorId: 'sector-it-office', x: 512, y: 280, width: 18, height: 110, label: 'CỬA IT OFFICE' },
+  { id: 'door-db-west', sectorId: 'sector-database-room', x: 1120, y: 280, width: 18, height: 110, label: 'CỬA DATABASE' },
+  { id: 'door-server-east', sectorId: 'sector-server-room', x: 512, y: 740, width: 18, height: 110, label: 'CỬA SERVER ROOM' },
+  { id: 'door-security-west', sectorId: 'sector-security-room', x: 1120, y: 740, width: 18, height: 110, label: 'CỬA SECURITY ROOM' },
 ];
 
 // Solid partition walls & room furniture obstacles (with clear 110-120px doorways)

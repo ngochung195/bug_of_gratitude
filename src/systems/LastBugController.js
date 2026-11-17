@@ -16,16 +16,12 @@ export class LastBugController {
   init(onReadyToShowScreen) {
     this.onReadyToShowScreen = onReadyToShowScreen;
 
-    this.eventBus.on(EVENTS.ALL_MISSIONS_COMPLETED, () => {
-      this.tryTrigger(1100);
-    });
-
     this.eventBus.on(EVENTS.MISSION_PROGRESS_RESET, () => {
       this.reset();
     });
   }
 
-  tryTrigger(delayMs = 1100) {
+  tryTrigger(delayMs = 600) {
     if (this.hasTriggered) {
       return false;
     }
@@ -46,7 +42,11 @@ export class LastBugController {
       if (delayMs <= 0) {
         this.onReadyToShowScreen();
       } else {
-        this.transitionTimer = window.setTimeout(() => {
+        const setTimer =
+          typeof window !== 'undefined' && typeof window.setTimeout === 'function'
+            ? window.setTimeout.bind(window)
+            : setTimeout;
+        this.transitionTimer = setTimer(() => {
           this.onReadyToShowScreen();
         }, delayMs);
       }
@@ -57,7 +57,11 @@ export class LastBugController {
 
   clearTimer() {
     if (this.transitionTimer) {
-      window.clearTimeout(this.transitionTimer);
+      const clear =
+        typeof window !== 'undefined' && typeof window.clearTimeout === 'function'
+          ? window.clearTimeout.bind(window)
+          : clearTimeout;
+      clear(this.transitionTimer);
       this.transitionTimer = null;
     }
   }
@@ -70,4 +74,3 @@ export class LastBugController {
 
 export const lastBugController = new LastBugController();
 export default LastBugController;
-

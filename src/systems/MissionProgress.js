@@ -30,6 +30,8 @@ export class MissionProgress {
       statusById,
       wrongAttempts: 0,
       introCompleted: false,
+      shownHackerMessages: [],
+      exploredSectors: ['sector-reception'],
     };
   }
 
@@ -93,10 +95,20 @@ export class MissionProgress {
 
       const introCompleted = Boolean(parsed.introCompleted);
 
+      const shownHackerMessages = Array.isArray(parsed.shownHackerMessages)
+        ? parsed.shownHackerMessages.filter((id) => typeof id === 'string')
+        : [];
+
+      const exploredSectors = Array.isArray(parsed.exploredSectors)
+        ? Array.from(new Set(['sector-reception', ...parsed.exploredSectors]))
+        : ['sector-reception'];
+
       return {
         statusById: restoredStatus,
         wrongAttempts,
         introCompleted,
+        shownHackerMessages,
+        exploredSectors,
       };
     } catch {
       return fallback;
@@ -120,7 +132,13 @@ export class MissionProgress {
     }
   }
 
-  save({ statusById, wrongAttempts = 0, introCompleted = false }) {
+  save({
+    statusById,
+    wrongAttempts = 0,
+    introCompleted = false,
+    shownHackerMessages = [],
+    exploredSectors = ['sector-reception'],
+  }) {
     try {
       const storage = getStorage();
       if (!storage) return;
@@ -130,6 +148,8 @@ export class MissionProgress {
           statusById,
           wrongAttempts,
           introCompleted: Boolean(introCompleted),
+          shownHackerMessages: Array.from(new Set(shownHackerMessages)),
+          exploredSectors: Array.from(new Set(exploredSectors)),
         })
       );
     } catch {

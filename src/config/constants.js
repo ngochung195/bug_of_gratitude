@@ -66,6 +66,8 @@ export const EVENTS = {
   SECTOR_STATUS_UPDATED: 'exploration:sector_status_updated',
   OBJECT_INSPECTED: 'exploration:object_inspected',
   SCAN_PULSE_TRIGGERED: 'exploration:scan_pulse_triggered',
+  HACKER_MESSAGE_RECEIVED: 'investigation:hacker_message_received',
+  CENTRAL_CONTROL_UNLOCKED: 'investigation:central_control_unlocked',
   PLAYER_MOVED: 'player:moved',
   MOBILE_INPUT_CHANGED: 'input:mobile_changed',
   MOBILE_INTERACT_PRESSED: 'input:mobile_interact',

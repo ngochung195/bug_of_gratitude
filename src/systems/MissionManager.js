@@ -17,6 +17,8 @@ export class MissionManager {
     this.statusById = loaded.statusById;
     this.wrongAttempts = loaded.wrongAttempts;
     this.introCompleted = Boolean(loaded.introCompleted);
+    this.shownHackerMessages = new Set(loaded.shownHackerMessages || []);
+    this.exploredSectors = new Set(loaded.exploredSectors || ['sector-reception']);
     this.maxWrongAttempts = APP_CONFIG.MAX_WRONG_ATTEMPTS;
     this.allCompletedEmitted = this.isAllCompleted();
   }
@@ -29,6 +31,22 @@ export class MissionManager {
   markIntroCompleted() {
     this.introCompleted = true;
     this.saveState();
+  }
+
+  markSectorExplored(sectorId) {
+    if (!sectorId) return false;
+    if (this.exploredSectors.has(sectorId)) return false;
+    this.exploredSectors.add(sectorId);
+    this.saveState();
+    return true;
+  }
+
+  isSectorExplored(sectorId) {
+    return this.exploredSectors.has(sectorId);
+  }
+
+  hasShownHackerMessage(missionId) {
+    return this.shownHackerMessages.has(missionId);
   }
 
   getAllMissions() {
@@ -97,13 +115,13 @@ export class MissionManager {
       return 'Mentor Bot C-2011: "Bạn đã dùng hết 3/3 lượt thử sai. Hãy nhấn RESET TRÒ CHƠI để bình tĩnh làm lại từ đầu nhé!"';
     }
     if (this.isAllCompleted()) {
-      return 'Mentor Bot C-2011: "Xuất sắc! Bạn đã sửa xong cả 4 Bug kỹ thuật. Nhưng hệ thống vừa phát hiện một tín hiệu lạ ở trung tâm..."';
+      return 'Mentor Bot C-2011: "Xuất sắc! Bạn đã sửa xong cả 4 sự cố kỹ thuật. Nhưng Lõi Trung Tâm vừa phát hiện một lỗ hổng cuối cùng: BUG #005..."';
     }
     const current = this.getCurrentActiveMission();
     if (current && current.mentorHint) {
       return `${current.mentorHint} (Số cơ hội còn lại: ${this.getRemainingAttempts()}/${this.maxWrongAttempts})`;
     }
-    return 'Mentor Bot C-2011: "Hãy bắt đầu từ Trạm Terminal Alpha (BUG #001) ở góc Tây Bắc phòng Lab nhé!"';
+    return 'Mentor Bot C-2011: "Hãy bắt đầu điều tra từ phòng IT OFFICE (BUG #001) ở góc Tây Bắc nhé!"';
   }
 
   startMission(missionId) {
@@ -113,9 +131,14 @@ export class MissionManager {
       return {
         canOpen: false,
         reason: current
-          ? `Trạm này đang khóa [LOCKED]. Hãy hoàn thành ${current.code} (${current.title}) trước nhé!`
+          ? `Khu vực / Trạm này đang khóa [LOCKED]. Hãy hoàn thành ${current.code} tại ${current.location || current.title} trước nhé!`
           : 'Nhiệm vụ này hiện đang khóa.',
       };
+    }
+
+    const missionObj = this.getMissionById(missionId);
+    if (missionObj?.sectorId) {
+      this.markSectorExplored(missionObj.sectorId);
     }
 
     if (status === MISSION_STATUS.AVAILABLE && !this.isOutOfAttempts()) {
@@ -158,6 +181,7 @@ export class MissionManager {
         outOfAttempts: false,
         remainingAttempts: this.getRemainingAttempts(),
         wrongOptionIds: [],
+        hackerMessage: null,
         feedback: 'Nhiệm vụ này đã được bạn hoàn thành trước đó.',
       };
     }
@@ -188,7 +212,6 @@ export class MissionManager {
     const validation = MissionValidator.validate(mission, payload);
 
     if (!validation.isValid) {
-      // Only deduct an attempt if the user actually selected/typed a wrong answer (not empty)
       if (!validation.isEmptyInput) {
         this.wrongAttempts = Math.min(this.maxWrongAttempts, this.wrongAttempts + 1);
         this.saveState();
@@ -215,12 +238,12 @@ export class MissionManager {
       const attemptSuffix = validation.isEmptyInput
         ? ''
         : outOfAttempts
-        ? ' [ĐÃ SAI 3/3 LẦN — HẾT LƯỢT THỬ! BẠN PHẢI RESET TRÒ CHƠI]'
-        : ` [Đáp án sai! Bạn còn ${remainingAttempts}/${this.maxWrongAttempts} cơ hội thử lại cho cả 4 câu]`;
+          ? ' [ĐÃ SAI 3/3 LẦN — HẾT LƯỢT THỬ! BẠN PHẢI RESET TRÒ CHƠI]'
+          : ` [Đáp án sai! Bạn còn ${remainingAttempts}/${this.maxWrongAttempts} cơ hội thử lại cho cả 4 câu]`;
 
       return {
         isValid: false,
-         isEmptyInput: Boolean(validation.isEmptyInput),
+        isEmptyInput: Boolean(validation.isEmptyInput),
         alreadyCompleted: false,
         outOfAttempts,
         wrongAttempts: this.wrongAttempts,
@@ -230,7 +253,10 @@ export class MissionManager {
       };
     }
 
-    // Mark current mission COMPLETED
+    // Mark sector explored & current mission COMPLETED
+    if (mission.sectorId) {
+      this.exploredSectors.add(mission.sectorId);
+    }
     this.statusById[missionId] = MISSION_STATUS.COMPLETED;
 
     // Unlock the next sequential mission if locked
@@ -245,21 +271,46 @@ export class MissionManager {
       }
     }
 
+    // Trigger Hacker Message strictly once per mission in sequential order
+    let triggeredHackerMessage = null;
+    if (mission.hackerMessageAfter && !this.shownHackerMessages.has(missionId)) {
+      this.shownHackerMessages.add(missionId);
+      triggeredHackerMessage = mission.hackerMessageAfter;
+    }
+
     this.saveState();
     this.emitUpdate();
 
     const completedCount = this.getCompletedCount();
     const totalCount = this.getTotalCount();
+    const updatedMission = this.getMissionById(missionId);
 
     this.eventBus.emit(EVENTS.MISSION_COMPLETED, {
-      mission: this.getMissionById(missionId),
+      mission: updatedMission,
       unlockedNextMission,
       completedCount,
       totalCount,
+      hackerMessage: triggeredHackerMessage,
     });
+
+    if (triggeredHackerMessage) {
+      this.eventBus.emit(EVENTS.HACKER_MESSAGE_RECEIVED, {
+        missionId,
+        order: updatedMission.order,
+        missionTitle: updatedMission.investigationTitle || updatedMission.title,
+        location: updatedMission.location || '',
+        restorationMessage: updatedMission.restorationMessage || '',
+        hackerMessage: triggeredHackerMessage,
+        isFinalClue: completedCount === totalCount,
+      });
+    }
 
     if (completedCount === totalCount && !this.allCompletedEmitted) {
       this.allCompletedEmitted = true;
+      this.eventBus.emit(EVENTS.CENTRAL_CONTROL_UNLOCKED, {
+        completedCount,
+        totalCount,
+      });
       this.eventBus.emit(EVENTS.ALL_MISSIONS_COMPLETED, {
         completedCount,
         totalCount,
@@ -273,6 +324,8 @@ export class MissionManager {
       remainingAttempts: this.getRemainingAttempts(),
       wrongOptionIds: [],
       feedback: validation.feedback,
+      restorationMessage: updatedMission.restorationMessage || '',
+      hackerMessage: triggeredHackerMessage,
       unlockedNextMission,
       allCompleted: completedCount === totalCount,
     };
@@ -283,6 +336,8 @@ export class MissionManager {
       statusById: this.statusById,
       wrongAttempts: this.wrongAttempts,
       introCompleted: this.introCompleted,
+      shownHackerMessages: Array.from(this.shownHackerMessages),
+      exploredSectors: Array.from(this.exploredSectors),
     });
   }
 
@@ -291,6 +346,8 @@ export class MissionManager {
     this.statusById = fresh.statusById;
     this.wrongAttempts = fresh.wrongAttempts;
     this.introCompleted = Boolean(fresh.introCompleted);
+    this.shownHackerMessages = new Set(fresh.shownHackerMessages || []);
+    this.exploredSectors = new Set(fresh.exploredSectors || ['sector-reception']);
     this.allCompletedEmitted = false;
     this.emitUpdate();
     this.eventBus.emit(EVENTS.MISSION_PROGRESS_RESET, {
