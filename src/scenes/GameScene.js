@@ -420,10 +420,23 @@ export class GameScene extends Phaser.Scene {
         if (this.inputManager) {
           this.inputManager.setEnabled(false);
         }
-        if (this.playerController && this.playerController.sprite?.body) {
-          this.playerController.sprite.body.setVelocity(0, 0);
+        if (this.playerController && this.playerController.sprite) {
+          if (this.playerController.sprite.body) {
+            this.playerController.sprite.body.setVelocity(0, 0);
+          }
+          // Ensure player is positioned inside Central Control Room facing the Mainframe
+          const pos = this.playerController.getPosition();
+          if (pos.y > 376 || pos.x < 568 || pos.x > 1064) {
+            this.playerController.sprite.setPosition(816, 275);
+          }
         }
         this.physics.world.pause();
+
+        // Slow camera zoom & emerald restoration pulse on the Central Control Mainframe
+        this.playScanPulseEffect(816, 145, 0x10b981);
+        if (this.cameras && this.cameras.main) {
+          this.cameras.main.zoomTo(1.12, 820, 'Sine.easeInOut');
+        }
       })
     );
 
@@ -443,6 +456,9 @@ export class GameScene extends Phaser.Scene {
       eventBus.on(EVENTS.GAME_RESTART_REQUESTED, () => {
         this.isLastBugLocked = false;
         syncPauseState(false);
+        if (this.cameras && this.cameras.main) {
+          this.cameras.main.setZoom(1);
+        }
         investigationSystem.reset();
         if (this.playerController) {
           this.playerController.resetPosition();

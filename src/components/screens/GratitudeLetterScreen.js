@@ -32,9 +32,11 @@ export function createGratitudeLetterScreen() {
   const header = document.createElement('header');
   header.className = 'gratitude-header';
   header.innerHTML = `
-    <span class="gratitude-header__badge">PATCH #005 // HEART TO HEART</span>
-    <h1 class="gratitude-header__title">A LETTER OF GRATITUDE</h1>
-    <p class="gratitude-header__quote">"Sometimes, the most meaningful words are the ones we never said."</p>
+    <span class="gratitude-header__badge">BUG #005 // THE LAST VULNERABILITY</span>
+    <h1 class="gratitude-header__title">WRITE YOUR GRATITUDE</h1>
+    <p class="gratitude-header__quote">
+      "Bạn không thể sửa lỗi này bằng code. Nhưng bạn có thể bắt đầu bằng một lời cảm ơn."
+    </p>
   `;
 
   // 2. Main Workspace (Form + Preview)

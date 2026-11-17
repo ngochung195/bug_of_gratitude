@@ -335,24 +335,27 @@ export function createGratitudeSkyScreen({ onNavigate } = {}) {
   container.appendChild(wallSection);
 
   // =========================================================================
-  // 5. CLOSING MESSAGE SECTION
+  // 5. CLOSING MESSAGE SECTION (PHASE 8.9 FINAL MESSAGE)
   // =========================================================================
   const closingBanner = document.createElement('footer');
   closingBanner.className = 'gsky-closing-banner';
-  closingBanner.setAttribute('aria-label', 'Thông điệp kết thúc');
+  closingBanner.setAttribute('aria-label', 'THE END – BUT GRATITUDE NEVER ENDS.');
   closingBanner.innerHTML = `
     <div class="gsky-closing-banner__stars">
       ${ICONS.SPARKLES}
       ${ICONS.STAR}
       ${ICONS.SPARKLES}
     </div>
+    <h2 class="gsky-section-title" style="color: #fde047; margin-bottom: 12px; letter-spacing: 0.08em;">
+      THE END – BUT GRATITUDE NEVER ENDS.
+    </h2>
     <blockquote class="gsky-closing-banner__quote">
-      "Chúng ta có thể viết hàng triệu dòng code.<br /><br />
-      Nhưng điều đẹp nhất không nằm trong chương trình.<br /><br />
-      Đó là những điều tốt đẹp mà Thầy/Cô đã để lại trong hành trình trưởng thành của chúng em."
+      "Code có thể sửa được lỗi hệ thống.<br /><br />
+      Nhưng lòng biết ơn cần được nói ra bằng trái tim.<br /><br />
+      Đừng chờ đến khi quá muộn mới nói lời cảm ơn."
     </blockquote>
     <div class="gsky-closing-banner__sub">
-      BUG OF GRATITUDE // CODEGYM 20/11/2026 — PATCH #005: RESOLVED WITH LOVE
+      BUG OF GRATITUDE: THE LAST VULNERABILITY // CODEGYM 20/11 — PATCH #005: RESOLVED WITH LOVE
     </div>
   `;
   container.appendChild(closingBanner);

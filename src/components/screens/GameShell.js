@@ -318,7 +318,7 @@ export function createGameShell({ soundEnabled = true } = {}) {
 
   enterCentralControlBtn.element.addEventListener('click', () => {
     hackerModal.close();
-    lastBugController.tryTrigger(350);
+    lastBugController.tryTrigger(900);
   });
 
   const showHackerTransmissionModal = (payload) => {
@@ -616,6 +616,21 @@ export function createGameShell({ soundEnabled = true } = {}) {
         currentSectorTagEl.textContent = `VỊ TRÍ: ${sector.name}`;
       }
       syncHudTelemetry();
+
+      // Automatically trigger Final Chapter when stepping into Central Control Room after all 4 missions are completed
+      if (
+        sector &&
+        sector.id === 'sector-central-control' &&
+        missionManager.isAllCompleted() &&
+        !lastBugController.hasTriggered
+      ) {
+        notification.show({
+          message: 'ALL SYSTEMS RESTORED — Đang đồng bộ Máy chủ Trung tâm tại Phòng Điều hành...',
+          type: 'success',
+          duration: 2800,
+        });
+        lastBugController.tryTrigger(950);
+      }
     })
   );
 
