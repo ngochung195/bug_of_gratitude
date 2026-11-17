@@ -67,8 +67,9 @@ export class GameScene extends Phaser.Scene {
     this.playerController = new PlayerController(this);
     this.inputManager = new InputManager(this);
 
-    // Camera follows player smoothly within map bounds
-    this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+    // Camera follows player smoothly with top (-110px) and bottom (+110px) safe margins
+    // so the Top HUD and Bottom HUD never cover the top or bottom walls of the map!
+    this.cameras.main.setBounds(0, -110, WORLD_WIDTH, WORLD_HEIGHT + 220);
     this.cameras.main.startFollow(this.playerController.sprite, true, 0.14, 0.14);
 
     this.physics.add.collider(this.playerController.sprite, this.obstaclesGroup);
@@ -120,8 +121,9 @@ export class GameScene extends Phaser.Scene {
     SECTORS.forEach((sec) => {
       const isReception = sec.id === 'sector-reception';
       const signX = isReception ? sec.x + 125 : sec.x + sec.width / 2;
-      const signY = isReception ? sec.y + 24 : sec.y + 15;
-      const badgeY = isReception ? sec.y + 44 : sec.y + 34;
+      // Place room signs cleanly below the 34px North wall face so they never overlap walls or AC/charts
+      const signY = isReception ? sec.y + 46 : sec.y + 48;
+      const badgeY = isReception ? sec.y + 66 : sec.y + 68;
 
       this.add
         .text(signX, signY, `${sec.name} — ${sec.viName}`, {

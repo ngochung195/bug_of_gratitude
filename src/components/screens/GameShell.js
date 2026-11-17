@@ -71,6 +71,13 @@ export function createGameShell({ soundEnabled = true } = {}) {
   clockBadge.style.color = '#fde047';
   clockBadge.textContent = `TIME: ${formatInGameClock(0)}`;
 
+  const currentSectorBadge = document.createElement('span');
+  currentSectorBadge.className = 'hud-attempts-badge';
+  currentSectorBadge.style.borderColor = 'rgba(0, 229, 255, 0.45)';
+  currentSectorBadge.style.color = '#67e8f9';
+  currentSectorBadge.textContent = 'VỊ TRÍ: RECEPTION';
+
+  telemetryRow.appendChild(currentSectorBadge);
   telemetryRow.appendChild(exploredBadge);
   telemetryRow.appendChild(incidentsBadge);
   telemetryRow.appendChild(attemptsBadge);
@@ -138,18 +145,11 @@ export function createGameShell({ soundEnabled = true } = {}) {
   topHud.appendChild(controls);
 
   // =========================================================================
-  // 2. CENTER GAME VIEWPORT FRAME & MOBILE D-PAD
+  // 2. CENTER GAME VIEWPORT FRAME & MOBILE D-PAD (NO OVERLAPPING BORDERS/TEXT)
   // =========================================================================
   const viewportFrame = document.createElement('div');
   viewportFrame.className = 'game-viewport-frame';
-
-  const topCorners = document.createElement('div');
-  topCorners.className = 'viewport-corners';
-  topCorners.innerHTML = `
-    <span class="hud-current-sector-tag">SECTOR // RECEPTION (KHU VỰC LỄ TÂN)</span>
-    <span>WASD / ARROWS: MOVE • [E]: INTERACT • [ESC]: PAUSE</span>
-  `;
-  const currentSectorTagEl = topCorners.querySelector('.hud-current-sector-tag');
+  const currentSectorTagEl = currentSectorBadge;
 
   // Mobile Touch Controls
   const mobileControls = document.createElement('div');
@@ -216,7 +216,6 @@ export function createGameShell({ soundEnabled = true } = {}) {
   mobileControls.appendChild(dpad);
   mobileControls.appendChild(mobileActions);
 
-  viewportFrame.appendChild(topCorners);
   viewportFrame.appendChild(mobileControls);
 
   // =========================================================================
@@ -614,7 +613,7 @@ export function createGameShell({ soundEnabled = true } = {}) {
   unsubscribers.push(
     eventBus.on(EVENTS.SECTOR_CHANGED, ({ sector }) => {
       if (sector && currentSectorTagEl) {
-        currentSectorTagEl.textContent = `SECTOR // ${sector.name} (${sector.viName.toUpperCase()})`;
+        currentSectorTagEl.textContent = `VỊ TRÍ: ${sector.name}`;
       }
       syncHudTelemetry();
     })
