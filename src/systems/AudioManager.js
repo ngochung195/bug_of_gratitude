@@ -2,6 +2,7 @@ import { EVENTS } from '../config/constants.js';
 import { eventBus } from '../core/EventBus.js';
 
 const PENTATONIC_FREQS = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
+const MYSTERY_TECH_FREQS = [196.0, 220.0, 261.63, 293.66, 329.63, 246.94];
 
 export class AudioManager {
   constructor(eventBusInstance = eventBus) {
@@ -10,6 +11,7 @@ export class AudioManager {
     this.ctx = null;
     this.ambientTimer = null;
     this.ambientActive = false;
+    this.ambientMode = 'sky';
     this.ambientNoteIndex = 0;
 
     this.eventBus.on(EVENTS.SOUND_TOGGLED, ({ enabled }) => {
@@ -144,7 +146,36 @@ export class AudioManager {
     }
   }
 
+  playTypeBlip(speaker = 'SYSTEM') {
+    const freqMap = {
+      PLAYER: 540,
+      UNKNOWN: 260,
+      SYSTEM: 680,
+    };
+    const freq = freqMap[speaker] || 520;
+    this.playTone({
+      freq,
+      duration: 0.025,
+      type: speaker === 'UNKNOWN' ? 'sawtooth' : 'triangle',
+      volume: 0.014,
+    });
+  }
+
+  startMysteryAmbient() {
+    this.ambientMode = 'mystery';
+    this.ambientActive = true;
+    if (!this.enabled) return;
+    this.scheduleNextAmbientNote(350);
+  }
+
+  stopMysteryAmbient() {
+    if (this.ambientMode === 'mystery') {
+      this.stopSkyAmbient();
+    }
+  }
+
   startSkyAmbient() {
+    this.ambientMode = 'sky';
     this.ambientActive = true;
     if (!this.enabled) return;
     this.scheduleNextAmbientNote(400);
@@ -163,18 +194,22 @@ export class AudioManager {
         return;
       }
 
-      const freq =
-        PENTATONIC_FREQS[this.ambientNoteIndex % PENTATONIC_FREQS.length];
+      const pool =
+        this.ambientMode === 'mystery' ? MYSTERY_TECH_FREQS : PENTATONIC_FREQS;
+      const freq = pool[this.ambientNoteIndex % pool.length];
       this.ambientNoteIndex += 1;
 
       this.playTone({
         freq,
-        duration: 0.85,
-        type: 'sine',
-        volume: 0.016,
+        duration: this.ambientMode === 'mystery' ? 0.65 : 0.85,
+        type: this.ambientMode === 'mystery' ? 'triangle' : 'sine',
+        volume: 0.015,
       });
 
-      const nextInterval = 2600 + (this.ambientNoteIndex % 3) * 650;
+      const nextInterval =
+        this.ambientMode === 'mystery'
+          ? 1800 + (this.ambientNoteIndex % 3) * 450
+          : 2600 + (this.ambientNoteIndex % 3) * 650;
       this.scheduleNextAmbientNote(nextInterval);
     }, delayMs);
   }

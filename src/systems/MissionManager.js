@@ -16,8 +16,19 @@ export class MissionManager {
     const loaded = this.progressStore.load();
     this.statusById = loaded.statusById;
     this.wrongAttempts = loaded.wrongAttempts;
+    this.introCompleted = Boolean(loaded.introCompleted);
     this.maxWrongAttempts = APP_CONFIG.MAX_WRONG_ATTEMPTS;
     this.allCompletedEmitted = this.isAllCompleted();
+  }
+
+  hasSavedProgress() {
+    const completedCount = this.getCompletedCount();
+    return Boolean(this.introCompleted || completedCount > 0 || this.wrongAttempts > 0);
+  }
+
+  markIntroCompleted() {
+    this.introCompleted = true;
+    this.saveState();
   }
 
   getAllMissions() {
@@ -271,6 +282,7 @@ export class MissionManager {
     this.progressStore.save({
       statusById: this.statusById,
       wrongAttempts: this.wrongAttempts,
+      introCompleted: this.introCompleted,
     });
   }
 
@@ -278,6 +290,7 @@ export class MissionManager {
     const fresh = this.progressStore.reset();
     this.statusById = fresh.statusById;
     this.wrongAttempts = fresh.wrongAttempts;
+    this.introCompleted = Boolean(fresh.introCompleted);
     this.allCompletedEmitted = false;
     this.emitUpdate();
     this.eventBus.emit(EVENTS.MISSION_PROGRESS_RESET, {

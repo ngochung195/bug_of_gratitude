@@ -1,6 +1,7 @@
 export const APP_CONFIG = {
   TITLE: import.meta.env?.VITE_APP_TITLE || 'BUG OF GRATITUDE',
-  VERSION: import.meta.env?.VITE_APP_VERSION || '0.1.0',
+  SUBTITLE: 'THE LAST VULNERABILITY',
+  VERSION: import.meta.env?.VITE_APP_VERSION || '0.2.0',
   WIDTH: 1280,
   HEIGHT: 720,
   BACKGROUND_COLOR: '#0B1021',
@@ -13,10 +14,16 @@ export const APP_CONFIG = {
   GRATITUDE_STORAGE_KEY: 'bog_gratitude_letters_v2',
   GRATITUDE_DRAFT_KEY: 'bog_gratitude_draft_v2',
   REACTION_STORAGE_KEY: 'bog_reacted_messages_v2',
+  BRAND_LOGOS: {
+    ICON: '/assets/images/brand/codegym-icon.png',
+    WORDMARK: '/assets/images/brand/codegym-wordmark.png',
+    FULL_SLOGAN: '/assets/images/brand/codegym-full-slogan.png',
+  },
 };
 
 export const UI_SCREENS = {
   INTRO: 'intro',
+  CINEMATIC_INTRO: 'cinematic_intro',
   LOADING: 'loading',
   GAME_SHELL: 'game_shell',
   LAST_BUG: 'last_bug',
@@ -45,6 +52,9 @@ export const EVENTS = {
   SCENE_CHANGED: 'scene:changed',
   SCREEN_CHANGE: 'ui:screen_change',
   GAME_START_REQUESTED: 'game:start_requested',
+  NEW_GAME_REQUESTED: 'game:new_game_requested',
+  CONTINUE_GAME_REQUESTED: 'game:continue_requested',
+  INVESTIGATION_START_REQUESTED: 'game:investigation_start_requested',
   GAME_PAUSE_TOGGLED: 'game:pause_toggled',
   GAME_RESTART_REQUESTED: 'game:restart_requested',
   GAME_EXIT_REQUESTED: 'game:exit_requested',

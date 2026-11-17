@@ -4,6 +4,7 @@ import './styles/global.css';
 import './styles/animations.css';
 import './styles/components.css';
 import './styles/screens.css';
+import './styles/introCinematic.css';
 import './styles/mission.css';
 import './styles/lastBug.css';
 import './styles/gratitudeLetter.css';

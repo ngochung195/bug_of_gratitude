@@ -1,0 +1,619 @@
+/* ==========================================================================
+   PHASE 8.6: OPENING SCREEN (NIGHT CODEGYM OFFICE) & CINEMATIC STORY INTRO
+   ========================================================================== */
+
+.opening-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: linear-gradient(180deg, #040711 0%, #091024 55%, #0f172a 100%);
+  color: var(--color-text-primary);
+}
+
+/* CodeGym Night Office Backdrop with Rain Outside Window & Glowing Monitors */
+.office-night-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Glass Windows Looking Out at the Rainy Night Sky */
+.office-window-wall {
+  position: absolute;
+  top: 4%;
+  left: 6%;
+  right: 6%;
+  height: 56%;
+  border: 2px solid rgba(56, 189, 248, 0.22);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(180deg, rgba(6, 11, 28, 0.92) 0%, rgba(15, 25, 58, 0.78) 100%);
+  box-shadow:
+    inset 0 0 60px rgba(0, 229, 255, 0.08),
+    0 12px 40px rgba(0, 0, 0, 0.65);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.office-window-pane {
+  border-right: 2px solid rgba(30, 41, 59, 0.85);
+  position: relative;
+}
+
+.office-window-pane:last-child {
+  border-right: none;
+}
+
+/* Rain Drops Falling Outside the Glass Window */
+.office-rain-layer {
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      105deg,
+      transparent 0px,
+      transparent 38px,
+      rgba(125, 211, 252, 0.22) 39px,
+      transparent 41px
+    ),
+    repeating-linear-gradient(
+      105deg,
+      transparent 0px,
+      transparent 64px,
+      rgba(196, 181, 253, 0.16) 65px,
+      transparent 67px
+    );
+  background-size: 180px 220px;
+  animation: windowRainFall 1.35s linear infinite;
+}
+
+@keyframes windowRainFall {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: -32px 220px, -24px 220px;
+  }
+}
+
+/* Office Silhouette: Server Racks & Glowing Computer Monitors */
+.office-interior-silhouette {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 46%;
+  background: linear-gradient(180deg, transparent 0%, rgba(5, 8, 18, 0.95) 36%, #050812 100%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 8% 3%;
+}
+
+.office-server-rack {
+  width: 96px;
+  height: 170px;
+  background: #0b1329;
+  border: 1px solid rgba(56, 189, 248, 0.32);
+  border-radius: 4px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 0 28px rgba(0, 229, 255, 0.14);
+}
+
+.office-server-led-row {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #00e5ff 0%, #00e5ff 35%, transparent 36%, #10b981 65%, transparent 80%);
+  animation: serverPulse 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes serverPulse {
+  0% {
+    opacity: 0.45;
+  }
+  100% {
+    opacity: 0.95;
+  }
+}
+
+.office-desk-cluster {
+  display: flex;
+  align-items: flex-end;
+  gap: 22px;
+}
+
+.office-monitor-glow {
+  width: 78px;
+  height: 48px;
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.28) 0%, rgba(139, 92, 246, 0.24) 100%);
+  border: 1px solid rgba(0, 229, 255, 0.58);
+  border-radius: 4px;
+  box-shadow:
+    0 0 26px rgba(0, 229, 255, 0.35),
+    0 18px 32px rgba(0, 229, 255, 0.18);
+  position: relative;
+}
+
+.office-monitor-glow::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 10px;
+  background: #1e293b;
+}
+
+/* Opening Card Panel */
+.opening-panel {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 680px;
+  background: rgba(10, 15, 32, 0.88);
+  border: 1px solid rgba(0, 229, 255, 0.48);
+  border-radius: var(--radius-md);
+  box-shadow:
+    0 20px 56px rgba(0, 0, 0, 0.78),
+    0 0 32px rgba(0, 229, 255, 0.2);
+  padding: var(--space-6) var(--space-6);
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-4);
+}
+
+/* Official CodeGym Brand Header */
+.opening-brand-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.opening-logo-frame {
+  background: #282973;
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  border-radius: var(--radius-sm);
+  padding: 6px 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+.opening-logo-img {
+  height: 44px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.opening-shift-badge {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--color-electric-blue);
+  background: rgba(0, 229, 255, 0.12);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.06em;
+}
+
+.opening-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.opening-title {
+  font-family: var(--font-pixel);
+  font-size: clamp(1.35rem, 3vw, 2.05rem);
+  line-height: 1.35;
+  color: var(--color-text-primary);
+  text-shadow: 0 0 18px rgba(0, 229, 255, 0.4);
+  margin: 0;
+}
+
+.opening-title__highlight {
+  color: var(--color-warm-gold-bright);
+  text-shadow: 0 0 20px rgba(251, 191, 36, 0.55);
+}
+
+.opening-subtitle {
+  font-family: var(--font-mono);
+  font-size: clamp(0.84rem, 1.5vw, 1.02rem);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: #f43f5e;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.opening-synopsis {
+  font-size: 0.94rem;
+  line-height: 1.62;
+  color: var(--color-text-secondary);
+  max-width: 560px;
+  margin: 0;
+}
+
+/* Primary Menu Buttons Grid */
+.opening-menu-actions {
+  width: 100%;
+  max-width: 480px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.opening-menu-actions .bog-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.opening-menu-actions__full {
+  grid-column: 1 / -1;
+}
+
+.opening-quick-sky-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  width: 100%;
+}
+
+/* ==========================================================================
+   CINEMATIC STORY INTRO SCREEN (5 SCENES + REUSABLE DIALOGUE BOX)
+   ========================================================================== */
+
+.cinematic-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: #050812;
+  color: var(--color-text-primary);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--space-5);
+}
+
+.cinematic-screen[data-mood='breach-glitch'] {
+  animation: breachLightFlicker 0.9s infinite alternate;
+}
+
+@keyframes breachLightFlicker {
+  0% {
+    background-color: #050812;
+  }
+  45% {
+    background-color: #190711;
+  }
+  55% {
+    background-color: #070b18;
+  }
+  100% {
+    background-color: #240814;
+  }
+}
+
+/* Top Bar of Cinematic Screen */
+.cinematic-topbar {
+  position: relative;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.cinematic-brand-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+}
+
+.cinematic-brand-pill img {
+  height: 24px;
+  width: auto;
+  object-fit: contain;
+}
+
+.cinematic-time-badge {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--color-electric-blue-soft);
+}
+
+/* Center Visual Stage for the 5 Scenes */
+.cinematic-stage {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: var(--space-4) auto;
+  width: 100%;
+  max-width: 820px;
+}
+
+.cinematic-monitor-frame {
+  width: 100%;
+  background: rgba(11, 17, 34, 0.9);
+  border: 2px solid rgba(0, 229, 255, 0.45);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-5);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.75), 0 0 28px rgba(0, 229, 255, 0.16);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.cinematic-screen[data-mood='breach-glitch'] .cinematic-monitor-frame,
+.cinematic-screen[data-mood='hacker-transmission'] .cinematic-monitor-frame {
+  border-color: rgba(244, 63, 94, 0.75);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.85), 0 0 36px rgba(244, 63, 94, 0.35);
+}
+
+.cinematic-scene-code {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--color-warm-gold-bright);
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.cinematic-clock-display {
+  font-family: var(--font-pixel);
+  font-size: clamp(1.6rem, 4vw, 2.6rem);
+  color: #00e5ff;
+  text-shadow: 0 0 20px rgba(0, 229, 255, 0.55);
+  margin: var(--space-1) 0;
+}
+
+.cinematic-screen[data-mood='breach-glitch'] .cinematic-clock-display,
+.cinematic-screen[data-mood='hacker-transmission'] .cinematic-clock-display {
+  color: #f43f5e;
+  text-shadow: 0 0 24px rgba(244, 63, 94, 0.75);
+}
+
+.cinematic-breach-alert {
+  display: none;
+  font-family: var(--font-pixel);
+  font-size: clamp(0.85rem, 1.8vw, 1.15rem);
+  color: #fecdd3;
+  background: rgba(225, 29, 72, 0.28);
+  border: 1px solid #f43f5e;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 22px rgba(244, 63, 94, 0.45);
+}
+
+.cinematic-breach-alert.is-visible {
+  display: inline-block;
+}
+
+.cinematic-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 560px;
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.cinematic-status-item {
+  background: rgba(7, 11, 20, 0.75);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  text-align: left;
+  color: #a7f3d0;
+}
+
+.cinematic-status-item.is-compromised {
+  border-color: rgba(244, 63, 94, 0.6);
+  color: #fda4af;
+}
+
+/* ==========================================================================
+   REUSABLE DIALOGUE BOX COMPONENT
+   ========================================================================== */
+
+.dialogue-box {
+  position: relative;
+  z-index: 15;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  background: rgba(9, 14, 28, 0.94);
+  border: 2px solid rgba(0, 229, 255, 0.55);
+  border-radius: var(--radius-md);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.8), 0 0 24px rgba(0, 229, 255, 0.18);
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.dialogue-box[data-speaker='UNKNOWN'] {
+  border-color: rgba(244, 63, 94, 0.75);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85), 0 0 28px rgba(244, 63, 94, 0.25);
+}
+
+.dialogue-box[data-speaker='SYSTEM'] {
+  border-color: rgba(251, 191, 36, 0.7);
+}
+
+.dialogue-box__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.dialogue-box__speaker-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.dialogue-box__speaker {
+  font-family: var(--font-pixel);
+  font-size: 0.72rem;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-electric-blue);
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.dialogue-box__role {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.dialogue-box__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dialogue-box__step {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--color-text-secondary);
+}
+
+.dialogue-box__skip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  color: var(--color-text-secondary);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.dialogue-box__skip-btn:hover {
+  border-color: var(--color-warm-gold-bright);
+  color: var(--color-warm-gold-bright);
+}
+
+.dialogue-box__skip-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.dialogue-box__content {
+  min-height: 84px;
+  cursor: pointer;
+  font-size: clamp(0.95rem, 1.5vw, 1.08rem);
+  line-height: 1.68;
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+}
+
+.dialogue-box__text {
+  display: inline;
+  margin: 0;
+}
+
+.dialogue-box__cursor {
+  display: inline-block;
+  margin-left: 4px;
+  color: var(--color-electric-blue);
+  animation: cursorBlink 0.8s steps(2) infinite;
+}
+
+@keyframes cursorBlink {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.dialogue-box__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.dialogue-box__hint {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 680px) {
+  .opening-panel {
+    padding: var(--space-4);
+  }
+  .opening-menu-actions {
+    grid-template-columns: 1fr;
+  }
+  .cinematic-screen {
+    padding: var(--space-3);
+  }
+  .cinematic-status-grid {
+    grid-template-columns: 1fr;
+  }
+  .dialogue-box {
+    padding: var(--space-3);
+  }
+}

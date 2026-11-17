@@ -1,6 +1,20 @@
 import { APP_CONFIG, MISSION_STATUS } from '../config/constants.js';
 import { MISSIONS } from '../data/MissionData.js';
 
+function getStorage() {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage;
+    }
+    if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
+      return globalThis.localStorage;
+    }
+  } catch {
+    // Ignore storage access restrictions
+  }
+  return null;
+}
+
 export class MissionProgress {
   constructor(storageKey = APP_CONFIG.STORAGE_KEY) {
     this.storageKey = storageKey;
@@ -15,13 +29,17 @@ export class MissionProgress {
     return {
       statusById,
       wrongAttempts: 0,
+      introCompleted: false,
     };
   }
 
   load() {
     const fallback = this.createDefaultState();
     try {
-      const raw = window.localStorage.getItem(this.storageKey);
+      const storage = getStorage();
+      if (!storage) return fallback;
+
+      const raw = storage.getItem(this.storageKey);
       if (!raw) {
         return fallback;
       }
@@ -31,7 +49,6 @@ export class MissionProgress {
         return fallback;
       }
 
-      // Support both legacy flat status map and new { statusById, wrongAttempts } structure
       const rawStatusMap =
         parsed.statusById && typeof parsed.statusById === 'object'
           ? parsed.statusById
@@ -74,22 +91,45 @@ export class MissionProgress {
         ? Math.max(0, Math.min(APP_CONFIG.MAX_WRONG_ATTEMPTS, parsed.wrongAttempts))
         : 0;
 
+      const introCompleted = Boolean(parsed.introCompleted);
+
       return {
         statusById: restoredStatus,
         wrongAttempts,
+        introCompleted,
       };
     } catch {
       return fallback;
     }
   }
 
-  save({ statusById, wrongAttempts = 0 }) {
+  hasSavedSession() {
     try {
-      window.localStorage.setItem(
+      const storage = getStorage();
+      if (!storage) return false;
+      const raw = storage.getItem(this.storageKey);
+      if (!raw) return false;
+
+      const loaded = this.load();
+      const hasCompletedAny = Object.values(loaded.statusById).some(
+        (st) => st === MISSION_STATUS.COMPLETED
+      );
+      return Boolean(loaded.introCompleted || hasCompletedAny || loaded.wrongAttempts > 0);
+    } catch {
+      return false;
+    }
+  }
+
+  save({ statusById, wrongAttempts = 0, introCompleted = false }) {
+    try {
+      const storage = getStorage();
+      if (!storage) return;
+      storage.setItem(
         this.storageKey,
         JSON.stringify({
           statusById,
           wrongAttempts,
+          introCompleted: Boolean(introCompleted),
         })
       );
     } catch {

@@ -4,14 +4,17 @@ import { PLAYER_START } from '../data/labEnvironment.js';
 import { audioManager } from './AudioManager.js';
 
 export class PlayerController {
-  constructor(scene, { x = PLAYER_START.x, y = PLAYER_START.y, speed = PLAYER_START.speed } = {}) {
+  constructor(
+    scene,
+    { x = PLAYER_START.x, y = PLAYER_START.y, speed = PLAYER_START.speed } = {}
+  ) {
     this.scene = scene;
     this.speed = speed;
     this.state = 'idle';
     this.facing = 'down';
     this.stepTimer = 0;
 
-    this.shadow = this.scene.add.ellipse(x, y + 18, 28, 12, 0x050811, 0.55);
+    this.shadow = this.scene.add.ellipse(x, y + 19, 26, 10, 0x050811, 0.58);
     this.shadow.setDepth(4);
 
     this.sprite = this.scene.physics.add.sprite(x, y, 'player-idle');
@@ -21,15 +24,25 @@ export class PlayerController {
     this.sprite.body.setOffset(12, 20);
 
     this.nameTag = this.scene.add
-      .text(x, y - 30, 'DEV_INTERN', {
+      .text(x, y - 30, 'IT_SPECIALIST', {
         fontFamily: 'JetBrains Mono, monospace',
         fontSize: '10px',
         color: '#00e5ff',
-        backgroundColor: 'rgba(7, 11, 20, 0.75)',
+        backgroundColor: 'rgba(7, 11, 20, 0.78)',
         padding: { x: 4, y: 2 },
       })
       .setOrigin(0.5)
       .setDepth(6);
+  }
+
+  getDirectionalAnimKey(mode = 'idle') {
+    if (this.facing === 'up') {
+      return mode === 'walk' ? 'player-walk-up' : 'player-idle-up';
+    }
+    if (this.facing === 'left' || this.facing === 'right') {
+      return mode === 'walk' ? 'player-walk-side' : 'player-idle-side';
+    }
+    return mode === 'walk' ? 'player-walk-down' : 'player-idle-down';
   }
 
   update(movementVector, delta = 16) {
@@ -51,7 +64,7 @@ export class PlayerController {
       }
 
       this.sprite.setFlipX(this.facing === 'left');
-      this.sprite.anims.play('player-walk-anim', true);
+      this.sprite.anims.play(this.getDirectionalAnimKey('walk'), true);
 
       this.stepTimer += delta;
       if (this.stepTimer >= 260) {
@@ -61,12 +74,13 @@ export class PlayerController {
     } else {
       if (this.state !== 'idle') {
         this.state = 'idle';
-        this.sprite.anims.play('player-idle-anim', true);
+        this.sprite.setFlipX(this.facing === 'left');
+        this.sprite.anims.play(this.getDirectionalAnimKey('idle'), true);
       }
       this.stepTimer = 0;
     }
 
-    this.shadow.setPosition(this.sprite.x, this.sprite.y + 18);
+    this.shadow.setPosition(this.sprite.x, this.sprite.y + 19);
     this.nameTag.setPosition(this.sprite.x, this.sprite.y - 30);
 
     eventBus.emit(EVENTS.PLAYER_MOVED, {
@@ -81,9 +95,12 @@ export class PlayerController {
     if (!this.sprite) return;
     this.sprite.setPosition(x, y);
     this.sprite.body.setVelocity(0, 0);
-    this.shadow.setPosition(x, y + 18);
+    this.shadow.setPosition(x, y + 19);
     this.nameTag.setPosition(x, y - 30);
+    this.facing = 'down';
     this.state = 'idle';
+    this.sprite.setFlipX(false);
+    this.sprite.anims.play(this.getDirectionalAnimKey('idle'), true);
   }
 
   getPosition() {
@@ -95,4 +112,3 @@ export class PlayerController {
 }
 
 export default PlayerController;
-

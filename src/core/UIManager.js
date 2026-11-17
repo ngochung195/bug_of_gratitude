@@ -1,4 +1,5 @@
 import gsap from 'gsap';
+import { createCinematicIntroScreen } from '../components/screens/CinematicIntroScreen.js';
 import { createGameShell } from '../components/screens/GameShell.js';
 import { createGratitudeLetterScreen } from '../components/screens/GratitudeLetterScreen.js';
 import { createGratitudeSkyScreen } from '../components/screens/GratitudeSkyScreen.js';
@@ -50,6 +51,18 @@ export class UIManager {
     });
 
     this.eventBus.on(EVENTS.GAME_START_REQUESTED, () => {
+      this.showScreen(UI_SCREENS.CINEMATIC_INTRO);
+    });
+
+    this.eventBus.on(EVENTS.NEW_GAME_REQUESTED, () => {
+      this.showScreen(UI_SCREENS.CINEMATIC_INTRO);
+    });
+
+    this.eventBus.on(EVENTS.CONTINUE_GAME_REQUESTED, () => {
+      this.showScreen(UI_SCREENS.LOADING);
+    });
+
+    this.eventBus.on(EVENTS.INVESTIGATION_START_REQUESTED, () => {
       this.showScreen(UI_SCREENS.LOADING);
     });
 
@@ -101,6 +114,12 @@ export class UIManager {
             this.showScreen(targetScreen);
           },
         });
+      } else if (screenKey === UI_SCREENS.CINEMATIC_INTRO) {
+        nextInstance = createCinematicIntroScreen({
+          onComplete: () => {
+            this.showScreen(UI_SCREENS.LOADING);
+          },
+        });
       } else if (screenKey === UI_SCREENS.LOADING) {
         nextInstance = createLoadingScreen({
           onComplete: () => {
@@ -144,6 +163,11 @@ export class UIManager {
       );
 
       if (screenKey === UI_SCREENS.LOADING && typeof nextInstance.startSequence === 'function') {
+        nextInstance.startSequence();
+      } else if (
+        screenKey === UI_SCREENS.CINEMATIC_INTRO &&
+        typeof nextInstance.startSequence === 'function'
+      ) {
         nextInstance.startSequence();
       } else if (
         screenKey === UI_SCREENS.LAST_BUG &&

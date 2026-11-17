@@ -1,11 +1,12 @@
+import { APP_CONFIG } from '../../config/constants.js';
 import { createLoadingIndicator } from '../LoadingIndicator.js';
 import { createProgressBar } from '../ProgressBar.js';
 
 const BOOT_STEPS = [
-  { progress: 25, text: 'MOUNTING RETRO-CYBER KERNEL...', log: 'Loaded core modules & shader grid' },
-  { progress: 55, text: 'SCANNING WORKSTATION SECTORS...', log: '4 debugging terminals detected' },
-  { progress: 85, text: 'CHECKING EMOTIONAL TELEMETRY...', log: 'Warning: Gratitude index anomalous' },
-  { progress: 100, text: 'SYSTEM READY. ENTERING LAB...', log: 'Workstation shell initialized' },
+  { progress: 25, text: 'CONNECTING TO CODEGYM INTERNAL NETWORK...', log: 'Loaded CodeGym HQ security map & grid sectors' },
+  { progress: 55, text: 'SCANNING COMPROMISED SECTORS...', log: '4 critical vulnerabilities detected' },
+  { progress: 85, text: 'ANALYZING HACKER SIGNATURE...', log: 'Warning: Unknown vulnerability #005 detected' },
+  { progress: 100, text: 'INVESTIGATION TERMINAL READY...', log: 'IT Specialist HUD initialized' },
 ];
 
 export function createLoadingScreen({ onComplete = null } = {}) {
@@ -19,8 +20,15 @@ export function createLoadingScreen({ onComplete = null } = {}) {
   const header = document.createElement('div');
   header.className = 'loading-header';
   header.innerHTML = `
-    <span class="loading-logo">BUG OF GRATITUDE</span>
-    <span class="loading-tag">BOOT_SEQ // 20.11</span>
+    <div style="display: inline-flex; align-items: center; gap: 10px;">
+      <img
+        src="${APP_CONFIG.BRAND_LOGOS.ICON}"
+        alt="CodeGym Icon"
+        style="height: 30px; width: 30px; object-fit: contain; border-radius: 4px;"
+      />
+      <span class="loading-logo">BUG OF GRATITUDE</span>
+    </div>
+    <span class="loading-tag">THE LAST VULNERABILITY</span>
   `;
 
   const indicator = createLoadingIndicator({
