@@ -121,10 +121,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   placeOfficialBrandElements() {
-    if (this.textures.exists('codegym-wordmark')) {
-      const receptionBanner = this.add.image(816, 738, 'codegym-wordmark');
-      receptionBanner.setDisplaySize(84, 84);
-      receptionBanner.setAlpha(0.95);
+    if (this.textures.exists('codegym-full-slogan')) {
+      const receptionBanner = this.add.image(816, 742, 'codegym-full-slogan');
+      receptionBanner.setDisplaySize(104, 104);
+      receptionBanner.setAlpha(0.96);
       receptionBanner.setDepth(2.5);
     }
 

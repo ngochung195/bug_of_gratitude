@@ -9,6 +9,7 @@ export class PreloadScene extends Phaser.Scene {
   preload() {
     this.load.image('codegym-wordmark', APP_CONFIG.BRAND_LOGOS.WORDMARK);
     this.load.image('codegym-icon', APP_CONFIG.BRAND_LOGOS.ICON);
+    this.load.image('codegym-full-slogan', APP_CONFIG.BRAND_LOGOS.FULL_SLOGAN);
     this.generateProceduralTextures();
   }
 
