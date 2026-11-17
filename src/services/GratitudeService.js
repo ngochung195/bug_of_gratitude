@@ -1,5 +1,6 @@
 import { APP_CONFIG, EVENTS } from '../config/constants.js';
 import { eventBus } from '../core/EventBus.js';
+import { SEED_GRATITUDE_MESSAGES } from '../data/SeedGratitudeData.js';
 import { GratitudeValidator } from '../systems/GratitudeValidator.js';
 import { gratitudeStorage } from './GratitudeStorage.js';
 import { getSupabaseStatus, supabase as defaultSupabaseClient } from './supabaseClient.js';
@@ -22,7 +23,13 @@ export function normalizeGratitudeRow(row) {
     }),
     message,
     isAnonymous,
-    isApproved: Boolean(row.is_approved ?? row.isApproved),
+    isApproved:
+      row.is_approved !== undefined
+        ? Boolean(row.is_approved)
+        : row.isApproved !== undefined
+          ? Boolean(row.isApproved)
+          : true,
+    reactionCount: Number(row.reactionCount ?? 0),
     createdAt: row.created_at || row.createdAt || new Date().toISOString(),
   };
 }
@@ -32,10 +39,12 @@ export class GratitudeService {
     client = defaultSupabaseClient,
     storage = gratitudeStorage,
     bus = eventBus,
+    includeSeedData = true,
   } = {}) {
     this.client = client;
     this.storage = storage;
     this.eventBus = bus;
+    this.includeSeedData = includeSeedData;
     this.activeChannel = null;
     this.channelCallbacks = new Set();
     this.hadConnectionDrop = false;
@@ -51,11 +60,35 @@ export class GratitudeService {
   }
 
   /**
-   * Submit a new gratitude letter:
-   * 1. Validates fields (Mentor Name required, Message <= 300 chars).
-   * 2. Saves a local copy in LocalStorage with isSynced = false.
-   * 3. Inserts into Supabase with is_approved = false (pending moderation).
-   * 4. Marks local copy as isSynced = true when Supabase insert succeeds.
+   * Returns merged local + 10 initial seeded wishes (deduplicated by id, sorted newest first).
+   */
+  getLocalAndSeededMessages() {
+    const map = new Map();
+
+    if (this.includeSeedData) {
+      SEED_GRATITUDE_MESSAGES.forEach((seed) => {
+        const norm = normalizeGratitudeRow(seed);
+        if (norm && norm.isApproved) {
+          map.set(norm.id, norm);
+        }
+      });
+    }
+
+    const stored = this.storage ? this.storage.getAllLetters() : [];
+    stored.forEach((item) => {
+      const norm = normalizeGratitudeRow({ ...item, isApproved: true });
+      if (norm && norm.mentorName && norm.message) {
+        map.set(norm.id, norm);
+      }
+    });
+
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  /**
+   * Submit a new gratitude letter directly to the shared sky (is_approved = true immediately).
    */
   async submitGratitude(rawInput = {}) {
     const creation = GratitudeValidator.createLetterObject(rawInput);
@@ -73,6 +106,7 @@ export class GratitudeService {
 
     const localLetter = this.storage.saveLetter({
       ...creation.letter,
+      isApproved: true,
       isSynced: false,
     });
 
@@ -81,7 +115,7 @@ export class GratitudeService {
       return {
         success: true,
         syncedToCloud: false,
-        pendingModeration: true,
+        pendingModeration: false,
         letter: localLetter,
         error: status.message,
       };
@@ -95,27 +129,27 @@ export class GratitudeService {
         : (localLetter.senderName || 'Anonymous').slice(0, 100),
       message: localLetter.message.slice(0, 300),
       is_anonymous: Boolean(localLetter.isAnonymous),
-      is_approved: false,
+      is_approved: true,
       created_at: localLetter.createdAt,
     };
 
     try {
-      // Do NOT chain .select() after .insert() because RLS only allows SELECT where is_approved = true
       const { error } = await this.client.from('gratitude_messages').insert([dbPayload]);
 
       if (error) {
         return {
           success: true,
           syncedToCloud: false,
-          pendingModeration: true,
+          pendingModeration: false,
           letter: localLetter,
-          error: error.message || 'Không thể đồng bộ lên Supabase, đã lưu bản sao tại máy.',
+          error: error.message || 'Không thể đồng bộ lên Supabase, đã hiển thị trên bầu trời máy bạn.',
         };
       }
 
       this.storage.markLetterSynced(localLetter.id);
       const syncedLetter = {
         ...localLetter,
+        isApproved: true,
         isSynced: true,
         syncedAt: new Date().toISOString(),
       };
@@ -123,7 +157,7 @@ export class GratitudeService {
       return {
         success: true,
         syncedToCloud: true,
-        pendingModeration: true,
+        pendingModeration: false,
         letter: syncedLetter,
         error: null,
       };
@@ -131,16 +165,15 @@ export class GratitudeService {
       return {
         success: true,
         syncedToCloud: false,
-        pendingModeration: true,
+        pendingModeration: false,
         letter: localLetter,
-        error: err?.message || 'Lỗi kết nối mạng khi gửi lên Supabase. Đã lưu tạm vào máy.',
+        error: err?.message || 'Lỗi kết nối mạng khi gửi lên Supabase. Đã hiển thị trên bầu trời.',
       };
     }
   }
 
   /**
-   * Syncs any unsynced LocalStorage letters to Supabase once.
-   * Marks each synced letter with `isSynced: true` so reloading the page does not resend.
+   * Syncs any unsynced LocalStorage letters to Supabase once with is_approved = true.
    */
   async syncUnsyncedLocalLetters() {
     if (!this.client || this.isSyncing) {
@@ -184,14 +217,13 @@ export class GratitudeService {
                 .slice(0, 100),
           message: message.slice(0, 300),
           is_anonymous: Boolean(letter.isAnonymous),
-          is_approved: false,
+          is_approved: true,
           created_at: letter.createdAt || new Date().toISOString(),
         };
 
         try {
           const { error } = await this.client.from('gratitude_messages').insert([dbPayload]);
 
-          // 23505 is PostgreSQL unique_violation (already inserted previously)
           if (!error || error.code === '23505') {
             this.storage.markLetterSynced(letter.id);
             syncedCount += 1;
@@ -214,8 +246,7 @@ export class GratitudeService {
   }
 
   /**
-   * Fetch approved gratitude messages with optional mentor search and pagination.
-   * Strictly fetches `is_approved = true` ordered by `created_at` descending.
+   * Fetch shared sky gratitude messages with optional mentor search and pagination.
    */
   async getApprovedMessages({
     page = 1,
@@ -226,19 +257,33 @@ export class GratitudeService {
     const safePageSize = Math.min(50, Math.max(1, Number(pageSize) || 12));
     const from = (safePage - 1) * safePageSize;
     const to = from + safePageSize - 1;
-    const trimmedQuery = String(mentorQuery ?? '').trim();
+    const trimmedQuery = String(mentorQuery ?? '').trim().toLowerCase();
 
-    if (!this.client) {
+    const applyLocalFallback = (errorMsg = null) => {
+      let allItems = this.getLocalAndSeededMessages();
+      if (trimmedQuery.length > 0) {
+        allItems = allItems.filter((item) =>
+          item.mentorName.toLowerCase().includes(trimmedQuery)
+        );
+      }
+      const totalCount = allItems.length;
+      const totalPages = totalCount > 0 ? Math.ceil(totalCount / safePageSize) : 0;
+      const pagedItems = allItems.slice(from, to + 1);
+
       return {
-        items: [],
+        items: pagedItems,
         page: safePage,
         pageSize: safePageSize,
-        totalCount: 0,
-        totalPages: 0,
-        hasMore: false,
+        totalCount,
+        totalPages,
+        hasMore: safePage < totalPages,
         fromCloud: false,
-        error: getSupabaseStatus().message,
+        error: errorMsg,
       };
+    };
+
+    if (!this.client) {
+      return applyLocalFallback(null);
     }
 
     try {
@@ -259,30 +304,25 @@ export class GratitudeService {
         .range(from, to);
 
       if (error) {
-        return {
-          items: [],
-          page: safePage,
-          pageSize: safePageSize,
-          totalCount: 0,
-          totalPages: 0,
-          hasMore: false,
-          fromCloud: false,
-          error: error.message || 'Không thể tải danh sách lời cảm ơn từ Supabase.',
-        };
+        return applyLocalFallback(error.message);
       }
 
-      const items = Array.isArray(data)
+      const cloudItems = Array.isArray(data)
         ? data
             .filter((row) => row && row.is_approved === true)
             .map((row) => normalizeGratitudeRow(row))
             .filter(Boolean)
         : [];
 
-      const totalCount = typeof count === 'number' ? count : items.length;
+      if (cloudItems.length === 0 && safePage === 1 && this.includeSeedData) {
+        return applyLocalFallback(null);
+      }
+
+      const totalCount = typeof count === 'number' ? count : cloudItems.length;
       const totalPages = totalCount > 0 ? Math.ceil(totalCount / safePageSize) : 0;
 
       return {
-        items,
+        items: cloudItems,
         page: safePage,
         pageSize: safePageSize,
         totalCount,
@@ -292,21 +332,12 @@ export class GratitudeService {
         error: null,
       };
     } catch (err) {
-      return {
-        items: [],
-        page: safePage,
-        pageSize: safePageSize,
-        totalCount: 0,
-        totalPages: 0,
-        hasMore: false,
-        fromCloud: false,
-        error: err?.message || 'Lỗi kết nối mạng khi tải danh sách lời cảm ơn.',
-      };
+      return applyLocalFallback(err?.message || null);
     }
   }
 
   /**
-   * Search approved messages by Mentor Name.
+   * Search messages by Mentor Name.
    */
   async searchByMentorName(mentorName = '', { page = 1, pageSize = 12 } = {}) {
     return this.getApprovedMessages({
@@ -317,16 +348,22 @@ export class GratitudeService {
   }
 
   /**
-   * Get total number of approved gratitude messages.
+   * Get total number of shared gratitude messages.
    */
   async getApprovedCount({ mentorQuery = '' } = {}) {
     const trimmedQuery = String(mentorQuery ?? '').trim();
 
     if (!this.client) {
+      let list = this.getLocalAndSeededMessages();
+      if (trimmedQuery) {
+        list = list.filter((m) =>
+          m.mentorName.toLowerCase().includes(trimmedQuery.toLowerCase())
+        );
+      }
       return {
-        count: 0,
+        count: list.length,
         fromCloud: false,
-        error: getSupabaseStatus().message,
+        error: null,
       };
     }
 
@@ -343,43 +380,64 @@ export class GratitudeService {
       const { count, error } = await query;
 
       if (error) {
+        const fallbackCount = this.getLocalAndSeededMessages().length;
         return {
-          count: 0,
+          count: fallbackCount,
           fromCloud: false,
-          error: error.message || 'Không thể đếm tổng số lời cảm ơn.',
+          error: error.message,
         };
       }
 
+      const finalCount =
+        typeof count === 'number' && count > 0
+          ? count
+          : this.includeSeedData
+            ? this.getLocalAndSeededMessages().length
+            : 0;
+
       return {
-        count: typeof count === 'number' ? count : 0,
+        count: finalCount,
         fromCloud: true,
         error: null,
       };
     } catch (err) {
       return {
-        count: 0,
+        count: this.getLocalAndSeededMessages().length,
         fromCloud: false,
-        error: err?.message || 'Lỗi kết nối mạng khi lấy tổng số lời cảm ơn.',
+        error: err?.message || null,
       };
     }
   }
 
   /**
-   * Get real community statistics from Supabase:
-   * - totalApprovedMessages (is_approved = true)
-   * - totalHeartReactions (reaction_type = 'heart')
-   * - uniqueMentorsCount (distinct normalized mentor_name among approved messages)
-   * Strictly uses real database figures (never fabricates fake numbers).
+   * Get community statistics for GRATITUDE SKY.
    */
   async getCommunityStatistics() {
-    if (!this.client) {
+    const computeLocalStats = () => {
+      const all = this.getLocalAndSeededMessages();
+      const mentorSet = new Set();
+      let totalReactions = 0;
+
+      all.forEach((m) => {
+        const normMentor = String(m.mentorName || '')
+          .trim()
+          .replace(/\s+/g, ' ')
+          .toLowerCase();
+        if (normMentor) mentorSet.add(normMentor);
+        totalReactions += Number(m.reactionCount || 0);
+      });
+
       return {
-        totalApprovedMessages: 0,
-        totalHeartReactions: 0,
-        uniqueMentorsCount: 0,
+        totalApprovedMessages: all.length,
+        totalHeartReactions: totalReactions,
+        uniqueMentorsCount: mentorSet.size,
         fromCloud: false,
-        error: getSupabaseStatus().message,
+        error: null,
       };
+    };
+
+    if (!this.client) {
+      return computeLocalStats();
     }
 
     try {
@@ -395,19 +453,16 @@ export class GratitudeService {
       ]);
 
       if (messagesRes.error) {
-        return {
-          totalApprovedMessages: 0,
-          totalHeartReactions: 0,
-          uniqueMentorsCount: 0,
-          fromCloud: false,
-          error:
-            messagesRes.error.message || 'Không thể tải thống kê lời cảm ơn từ cơ sở dữ liệu.',
-        };
+        return computeLocalStats();
       }
 
       const approvedRows = Array.isArray(messagesRes.data)
         ? messagesRes.data.filter((row) => row && row.is_approved === true)
         : [];
+
+      if (approvedRows.length === 0 && this.includeSeedData) {
+        return computeLocalStats();
+      }
 
       const totalApprovedMessages =
         typeof messagesRes.count === 'number' ? messagesRes.count : approvedRows.length;
@@ -435,20 +490,13 @@ export class GratitudeService {
         fromCloud: true,
         error: null,
       };
-    } catch (err) {
-      return {
-        totalApprovedMessages: 0,
-        totalHeartReactions: 0,
-        uniqueMentorsCount: 0,
-        fromCloud: false,
-        error: err?.message || 'Lỗi kết nối mạng khi tải thống kê bầu trời tri ân.',
-      };
+    } catch {
+      return computeLocalStats();
     }
   }
 
   /**
-   * Subscribe to Realtime updates for newly approved messages (`is_approved = true`).
-   * Prevents duplicate channels by reusing `this.activeChannel`.
+   * Subscribe to Realtime updates for newly submitted messages on the shared sky.
    */
   subscribeToApprovedMessages({
     onApprovedMessage,
@@ -466,14 +514,13 @@ export class GratitudeService {
 
     if (!this.client) {
       if (subscriberEntry.onStatusChange) {
-        subscriberEntry.onStatusChange('UNCONFIGURED');
+        subscriberEntry.onStatusChange('LOCAL_SKY_READY');
       }
       return () => {
         this.channelCallbacks.delete(subscriberEntry);
       };
     }
 
-    // Prevent duplicate Realtime subscriptions
     if (this.activeChannel) {
       return () => {
         this.channelCallbacks.delete(subscriberEntry);
@@ -491,7 +538,6 @@ export class GratitudeService {
         return;
       }
 
-      // If UPDATE, only trigger if it transitioned to approved or content updated while approved
       if (
         payload.eventType === 'UPDATE' &&
         payload.old &&
@@ -585,4 +631,3 @@ export class GratitudeService {
 
 export const gratitudeService = new GratitudeService();
 export default GratitudeService;
-

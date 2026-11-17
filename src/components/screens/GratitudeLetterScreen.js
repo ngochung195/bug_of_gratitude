@@ -321,7 +321,7 @@ export function createGratitudeLetterScreen() {
     isSubmitting = true;
     sendBtn.setDisabled(true);
 
-    // Submit via GratitudeService (validates, saves local backup, and inserts into Supabase with is_approved = false)
+    // Submit via GratitudeService (validates, saves, and publishes directly to the shared sky)
     const submitResult = await gratitudeService.submitGratitude({
       mentorName: mentorInput.value,
       senderName: senderInput.value,
@@ -337,19 +337,15 @@ export function createGratitudeLetterScreen() {
 
     const tl = gsap.timeline({
       onComplete: () => {
-        const statusNotice = submitResult.syncedToCloud
-          ? `Đã gửi lời cảm ơn tới ${savedLetter.mentorName} lên hệ thống (đang chờ duyệt công khai)!`
-          : `Đã lưu lời cảm ơn tới ${savedLetter.mentorName}! Đang tiến vào RAIN OF GRATITUDE...`;
-
         notification.show({
-          message: statusNotice,
+          message: `✨ Đã gửi lời chúc tới ${savedLetter.mentorName} lên bầu trời tri ân chung!`,
           type: 'warm',
           duration: 4200,
         });
         eventBus.emit(EVENTS.GRATITUDE_SUBMITTED, {
           letter: savedLetter,
           syncedToCloud: submitResult.syncedToCloud,
-          pendingModeration: submitResult.pendingModeration,
+          pendingModeration: false,
           cloudError: submitResult.error,
           nextScreen: UI_SCREENS.RAIN_OF_GRATITUDE,
         });

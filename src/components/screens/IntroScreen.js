@@ -80,9 +80,20 @@ export function createIntroScreen({ onNavigate } = {}) {
     },
   });
 
+  const rainBtn = createButton({
+    label: 'BẦU TRỜI LỜI CHÚC',
+    variant: 'warm',
+    iconSvg: ICONS.SPARKLES,
+    onClick: () => {
+      if (typeof onNavigate === 'function') {
+        onNavigate(UI_SCREENS.RAIN_OF_GRATITUDE);
+      }
+    },
+  });
+
   const skyBtn = createButton({
     label: 'GRATITUDE SKY',
-    variant: 'warm',
+    variant: 'secondary',
     iconSvg: ICONS.STAR,
     onClick: () => {
       if (typeof onNavigate === 'function') {
@@ -92,6 +103,7 @@ export function createIntroScreen({ onNavigate } = {}) {
   });
 
   actions.appendChild(startBtn.element);
+  actions.appendChild(rainBtn.element);
   actions.appendChild(skyBtn.element);
   actions.appendChild(aboutBtn.element);
 

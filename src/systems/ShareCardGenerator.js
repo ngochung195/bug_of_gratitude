@@ -346,3 +346,4 @@ export class ShareCardGenerator {
 }
 
 export default ShareCardGenerator;
+

@@ -1,5 +1,6 @@
 import { APP_CONFIG, EVENTS } from '../config/constants.js';
 import { eventBus } from '../core/EventBus.js';
+import { SEED_GRATITUDE_MESSAGES } from '../data/SeedGratitudeData.js';
 import { getSupabaseStatus, supabase as defaultSupabaseClient } from './supabaseClient.js';
 
 function getLocalStorage() {
@@ -30,6 +31,12 @@ export class ReactionService {
     this.lastReactionTimestamp = 0;
     this.pendingReactions = new Set();
     this.localCountFallback = new Map();
+
+    SEED_GRATITUDE_MESSAGES.forEach((seed) => {
+      if (seed && seed.id && typeof seed.reactionCount === 'number') {
+        this.localCountFallback.set(seed.id, seed.reactionCount);
+      }
+    });
   }
 
   setClient(client) {

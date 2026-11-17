@@ -166,14 +166,14 @@ export function createRainOfGratitudeScreen({
     ownBannerEl.className = 'rain-own-letter-banner';
     ownBannerEl.innerHTML = `
       <span class="rain-own-letter-banner__dot"></span>
-      <span>Lá thư bạn vừa gửi tới <strong></strong> đã bay lên bầu trời (Nhấn để xem)</span>
+      <span>✨ Lời chúc bạn gửi tới <strong></strong> đã tỏa sáng trên bầu trời chung (Nhấn để xem)</span>
     `;
     ownBannerEl.querySelector('strong').textContent = newlySubmittedLetter.mentorName;
     ownBannerEl.addEventListener('click', () => {
       openLetterModal({
         ...newlySubmittedLetter,
         publicSenderName: GratitudeValidator.formatPublicSender(newlySubmittedLetter),
-        isOwnPending: !newlySubmittedLetter.isApproved,
+        isOwnPending: false,
       });
     });
     centerStage.appendChild(ownBannerEl);
@@ -346,11 +346,11 @@ export function createRainOfGratitudeScreen({
   // Update Modal Heart Button UI
   const updateHeartButtonUI = (msg) => {
     if (!msg) return;
-    const count = Number(reactionCounts[msg.id] ?? 0);
+    const count = Number(reactionCounts[msg.id] ?? msg.reactionCount ?? 0);
     const alreadyReacted = reactionService.hasUserReacted(msg.id);
 
     heartBtn.classList.toggle('is-reacted', alreadyReacted);
-    heartBtn.disabled = Boolean(msg.isOwnPending);
+    heartBtn.disabled = false;
     heartBtn.innerHTML = `
       ${ICONS.HEART_SPARK}
       <span>${alreadyReacted ? 'Đã thả tim' : 'Thả tim tri ân'} (${count})</span>
@@ -364,9 +364,10 @@ export function createRainOfGratitudeScreen({
     canvasEngine.setSelectedNodeId(msg.id);
     renderConstellationStrip();
 
-    modalBadge.textContent = msg.isOwnPending
-      ? 'LÁ THƯ CỦA BẠN // ĐANG CHỜ DUYỆT CÔNG KHAI'
-      : 'GRATITUDE STAR // LỜI TRI ÂN ĐÃ DUYỆT';
+    modalBadge.textContent =
+      newlySubmittedLetter && msg.id === newlySubmittedLetter.id
+        ? 'NGÔI SAO CỦA BẠN // ĐÃ TỎA SÁNG TRÊN BẦU TRỜI CHUNG'
+        : 'GRATITUDE STAR // LỜI TRI ÂN TRÊN BẦU TRỜI CHUNG';
     modalRecipient.textContent = `Kính gửi: ${msg.mentorName}`;
     modalBody.textContent = msg.message;
 
@@ -408,7 +409,7 @@ export function createRainOfGratitudeScreen({
 
   // Heart Reaction Click Handler
   heartBtn.addEventListener('click', async () => {
-    if (!activeMessage || activeMessage.isOwnPending) return;
+    if (!activeMessage) return;
     const msgId = activeMessage.id;
 
     const res = await reactionService.addHeartReaction(msgId);
@@ -421,7 +422,7 @@ export function createRainOfGratitudeScreen({
       return;
     }
 
-    const nextCount = Number(reactionCounts[msgId] ?? 0) + 1;
+    const nextCount = Number(reactionCounts[msgId] ?? activeMessage.reactionCount ?? 0) + 1;
     reactionCounts[msgId] = nextCount;
 
     audioManager.playHeartReaction();
@@ -439,8 +440,6 @@ export function createRainOfGratitudeScreen({
 
   // Render Bottom Constellation Strip & Sky Nodes
   const syncSkyAndDock = () => {
-    // Public sky strictly displays approved messages; if player just submitted a letter in this session,
-    // include it as a highlighted rising node so they see their letter join the sky (Section 5).
     const skyList = [...approvedMessages];
 
     if (
@@ -451,15 +450,14 @@ export function createRainOfGratitudeScreen({
       skyList.unshift({
         ...newlySubmittedLetter,
         publicSenderName: GratitudeValidator.formatPublicSender(newlySubmittedLetter),
-        isOwnPending: !newlySubmittedLetter.isApproved,
+        isApproved: true,
       });
     }
 
-    // Empty state is shown whenever there are 0 approved messages in Supabase
-    const hasApprovedMessages = approvedMessages.length > 0;
+    const hasApprovedMessages = skyList.length > 0;
     emptyStateEl.style.display = hasApprovedMessages ? 'none' : 'block';
 
-    countBadge.textContent = `${totalApprovedCount} LỜI TRI ÂN ĐÃ DUYỆT`;
+    countBadge.textContent = `${Math.max(totalApprovedCount, skyList.length)} LỜI CHÚC TRÊN BẦU TRỜI CHUNG`;
 
     if (totalPages > 1) {
       paginationWrap.style.display = 'inline-flex';
@@ -486,17 +484,18 @@ export function createRainOfGratitudeScreen({
       const emptyHint = document.createElement('span');
       emptyHint.className = 'rain-dock-hint';
       emptyHint.style.opacity = '0.7';
-      emptyHint.textContent = 'Đang chờ lời cảm ơn đầu tiên được duyệt công khai...';
+      emptyHint.textContent = 'Hãy gửi lời chúc đầu tiên lên bầu trời chung...';
       constellationStrip.appendChild(emptyHint);
       return;
     }
 
     list.forEach((msg) => {
+      const isOwn = Boolean(newlySubmittedLetter && msg.id === newlySubmittedLetter.id);
       const pill = document.createElement('button');
       pill.type = 'button';
       pill.className = 'rain-star-pill';
       pill.setAttribute('role', 'listitem');
-      if (msg.isOwnPending) {
+      if (isOwn) {
         pill.classList.add('rain-star-pill--own');
       }
       if (activeMessage && activeMessage.id === msg.id) {
@@ -505,15 +504,13 @@ export function createRainOfGratitudeScreen({
 
       const mentorSpan = document.createElement('span');
       mentorSpan.className = 'rain-star-pill__mentor';
-      mentorSpan.textContent = msg.isOwnPending
-        ? `[Thư của bạn] → ${msg.mentorName}`
-        : `Gửi: ${msg.mentorName}`;
+      mentorSpan.textContent = isOwn
+        ? `★ [Thư của bạn] → ${msg.mentorName}`
+        : `★ Gửi: ${msg.mentorName}`;
 
       const heartsSpan = document.createElement('span');
       heartsSpan.className = 'rain-star-pill__hearts';
-      heartsSpan.textContent = msg.isOwnPending
-        ? 'Chờ duyệt'
-        : `❤️ ${Number(reactionCounts[msg.id] ?? 0)}`;
+      heartsSpan.textContent = `❤️ ${Number(reactionCounts[msg.id] ?? msg.reactionCount ?? 0)}`;
 
       pill.appendChild(mentorSpan);
       pill.appendChild(heartsSpan);

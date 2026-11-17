@@ -71,8 +71,13 @@ export class GratitudeValidator {
       id: generateUUID(),
       mentorName,
       senderName: isAnonymous ? 'Anonymous' : senderName || 'Anonymous',
+      publicSenderName: GratitudeValidator.formatPublicSender({
+        senderName,
+        isAnonymous: Boolean(isAnonymous || !senderName),
+      }),
       message,
       isAnonymous: Boolean(isAnonymous || !senderName),
+      isApproved: true,
       createdAt: new Date().toISOString(),
     };
 

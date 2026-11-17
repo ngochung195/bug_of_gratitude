@@ -135,7 +135,7 @@ export function createGratitudeSkyScreen({ onNavigate } = {}) {
     <div class="gsky-stat-card__icon">${ICONS.STAR}</div>
     <div>
       <div class="gsky-stat-card__value" data-stat="approved">0</div>
-      <div class="gsky-stat-card__label">Tổng lời cảm ơn đã duyệt</div>
+      <div class="gsky-stat-card__label">Tổng lời chúc trên bầu trời chung</div>
     </div>
   `;
 
@@ -190,7 +190,7 @@ export function createGratitudeSkyScreen({ onNavigate } = {}) {
   constellationTitleWrap.innerHTML = `
     <h2 class="gsky-section-title">CONSTELLATION OF GRATITUDE</h2>
     <p class="gsky-section-desc">
-      Mỗi ngôi sao vàng rực rỡ là một lời cảm ơn đã duyệt. Nhấn vào ngôi sao để đọc hoặc đổi hình chòm sao:
+      Mỗi ngôi sao vàng rực rỡ là một lời chúc trên bầu trời chung. Nhấn vào ngôi sao để đọc hoặc đổi hình chòm sao:
     </p>
   `;
 
@@ -217,7 +217,7 @@ export function createGratitudeSkyScreen({ onNavigate } = {}) {
   constellationLegend.className = 'gsky-constellation-legend';
   constellationLegend.innerHTML = `
     <div class="gsky-legend-items">
-      <span><i class="gsky-legend-dot gsky-legend-dot--real"></i>Ngôi sao lời cảm ơn đã duyệt (Nhấn để đọc)</span>
+      <span><i class="gsky-legend-dot gsky-legend-dot--real"></i>Ngôi sao lời chúc trên bầu trời chung (Nhấn để đọc)</span>
       <span><i class="gsky-legend-dot gsky-legend-dot--guide"></i>Điểm mốc dẫn đường chòm sao</span>
     </div>
     <span class="gsky-constellation-status">Đang kết nối các vì sao...</span>
@@ -278,8 +278,8 @@ export function createGratitudeSkyScreen({ onNavigate } = {}) {
 
   const wallTitleWrap = document.createElement('div');
   wallTitleWrap.innerHTML = `
-    <h2 class="gsky-section-title">GRATITUDE WALL // THƯ VIỆN LỜI TRI ÂN</h2>
-    <p class="gsky-section-desc">Danh sách những lời cảm ơn đã được kiểm duyệt công khai từ cộng đồng</p>
+    <h2 class="gsky-section-title">GRATITUDE WALL // BẦU TRỜI LỜI CHÚC CHUNG</h2>
+    <p class="gsky-section-desc">Mọi lời chúc gửi đi đều lập tức tỏa sáng trên bầu trời tri ân chung của cộng đồng</p>
   `;
 
   const wallControls = document.createElement('div');
@@ -883,3 +883,4 @@ export function createGratitudeSkyScreen({ onNavigate } = {}) {
 }
 
 export default createGratitudeSkyScreen;
+
