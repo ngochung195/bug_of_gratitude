@@ -25,6 +25,9 @@ function formatDisplayDate(isoStr) {
 }
 
 export function createGratitudeSkyScreen({ onNavigate } = {}) {
+  // Crossfade to Gratitude Sky BGM (gratitude-sky.mp3)
+  audioManager.crossFade('gratitude-sky', { durationMs: 900, loop: true });
+
   const pageSize = APP_CONFIG.DEFAULT_PAGE_SIZE || 12;
   let currentPage = 1;
   let hasMorePages = false;

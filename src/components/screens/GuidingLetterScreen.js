@@ -63,11 +63,9 @@ export function createGuidingLetterScreen({
 
   soundBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    const next = audioManager.toggleEnabled();
-    if (next) {
-      audioManager.startGentlePianoMelody();
-    } else {
-      audioManager.stopGentlePianoMelody();
+    const isMuted = audioManager.toggleMute();
+    if (!isMuted) {
+      audioManager.playBGM('teachers-letter', { loop: true, fadeMs: 500 });
     }
     syncSoundBtnUI();
   });
@@ -365,12 +363,13 @@ export function createGuidingLetterScreen({
     continueBtn.setDisabled(true);
 
     audioManager.playWarmChime();
+    // Smoothly crossfade from 20/11 Teachers' Letter into Rain of Gratitude BGM
+    audioManager.crossFade('rain-of-gratitude', { durationMs: 1200, loop: true });
     paper.classList.add('is-dissolving');
     spawnDissolveParticles();
 
     const tl = gsap.timeline({
       onComplete: () => {
-        audioManager.stopGentlePianoMelody();
         eventBus.emit(EVENTS.GUIDING_LETTER_COMPLETED, {
           letter: personalLetter,
         });
@@ -436,7 +435,7 @@ export function createGuidingLetterScreen({
     typewriter,
     startSequence() {
       audioManager.playPaperOpen();
-      audioManager.startGentlePianoMelody();
+      audioManager.crossFade('teachers-letter', { durationMs: 850, loop: true });
 
       gsap.fromTo(
         paper,
@@ -454,7 +453,6 @@ export function createGuidingLetterScreen({
       }
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleKeyDown);
-      audioManager.stopGentlePianoMelody();
       typewriter.destroy();
       screen.remove();
     },
@@ -462,3 +460,4 @@ export function createGuidingLetterScreen({
 }
 
 export default createGuidingLetterScreen;
+

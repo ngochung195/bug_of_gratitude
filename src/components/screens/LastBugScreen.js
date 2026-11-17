@@ -231,6 +231,7 @@ export function createLastBugScreen() {
   skipBtn.element.addEventListener('click', completeDiagnosticsReveal);
 
   const startSequence = () => {
+    audioManager.crossFade('final-bug', { durationMs: 750, loop: true });
     timeline = gsap.timeline({
       onComplete: () => {
         isSequenceFinished = true;

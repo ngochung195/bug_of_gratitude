@@ -21,6 +21,9 @@ export function createGratitudeLetterScreen() {
   const maxLen = APP_CONFIG.GRATITUDE_MAX_LENGTH || 300;
   const savedDraft = gratitudeStorage.loadDraft();
 
+  // Play personal/student letter BGM (student-letter.mp3)
+  audioManager.crossFade('student-letter', { durationMs: 800, loop: true });
+
   const screen = document.createElement('section');
   screen.className = 'gratitude-screen';
   screen.setAttribute('aria-label', 'A Letter of Gratitude');

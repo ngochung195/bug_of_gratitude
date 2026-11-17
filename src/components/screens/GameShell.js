@@ -22,9 +22,24 @@ function formatInGameClock(elapsedSec = 0) {
 }
 
 export function createGameShell({ soundEnabled = true } = {}) {
-  let isSoundOn = soundEnabled;
+  let isSoundOn = soundEnabled && !audioManager.muted;
   let elapsedGameSeconds = 0;
+  let activeSectorId = 'sector-reception';
   const unsubscribers = [];
+
+  const getMapBgmForSector = (sectorId) => {
+    if (
+      sectorId === 'sector-server-room' ||
+      sectorId === 'sector-database-room' ||
+      sectorId === 'sector-security-room'
+    ) {
+      return 'investigation';
+    }
+    return 'exploration';
+  };
+
+  // Start Company Map Exploration BGM (looping)
+  audioManager.crossFade('exploration', { durationMs: 700, loop: true });
 
   const shell = document.createElement('section');
   shell.className = 'game-shell';
@@ -258,6 +273,12 @@ export function createGameShell({ soundEnabled = true } = {}) {
     closeOnBackdrop: true,
     onClose: () => {
       eventBus.emit(EVENTS.GAME_PAUSE_TOGGLED, { paused: false });
+      if (!missionUI.isOpen() && !hackerModal.isOpen()) {
+        audioManager.crossFade(getMapBgmForSector(activeSectorId), {
+          durationMs: 650,
+          loop: true,
+        });
+      }
     },
   });
 
@@ -266,6 +287,7 @@ export function createGameShell({ soundEnabled = true } = {}) {
   });
 
   const openInspectionModal = (target) => {
+    audioManager.crossFade('fix-bug', { durationMs: 550, loop: true });
     const titleEl = inspectionModal.element.querySelector('.bog-modal__title');
     if (titleEl) {
       titleEl.textContent = target.inspectionTitle || `KIỂM TRA // ${target.name}`;
@@ -309,6 +331,12 @@ export function createGameShell({ soundEnabled = true } = {}) {
     closeOnBackdrop: false,
     onClose: () => {
       eventBus.emit(EVENTS.GAME_PAUSE_TOGGLED, { paused: false });
+      if (!missionUI.isOpen() && !inspectionModal.isOpen()) {
+        audioManager.crossFade(getMapBgmForSector(activeSectorId), {
+          durationMs: 650,
+          loop: true,
+        });
+      }
     },
   });
 
@@ -323,6 +351,7 @@ export function createGameShell({ soundEnabled = true } = {}) {
 
   const showHackerTransmissionModal = (payload) => {
     if (!payload) return;
+    audioManager.crossFade('fix-bug', { durationMs: 500, loop: true });
     audioManager.playCriticalAlert();
 
     const titleEl = hackerModal.element.querySelector('.bog-modal__title');
@@ -477,6 +506,61 @@ export function createGameShell({ soundEnabled = true } = {}) {
   pauseList.appendChild(resumeBtn.element);
   pauseList.appendChild(restartBtn.element);
   pauseList.appendChild(pauseSoundBtn.element);
+
+  // Audio Volume Sliders inside Pause Menu (Master, BGM, SFX)
+  const audioSlidersBox = document.createElement('div');
+  audioSlidersBox.style.cssText =
+    'display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(148, 163, 184, 0.25); border-radius: 6px;';
+
+  const createCompactSlider = (labelText, initialValue, onSlide) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display: flex; flex-direction: column; gap: 3px;';
+    const top = document.createElement('div');
+    top.style.cssText =
+      'display: flex; justify-content: space-between; font-size: 0.76rem; color: var(--color-text-secondary);';
+    const nameEl = document.createElement('span');
+    nameEl.textContent = labelText;
+    const valEl = document.createElement('span');
+    valEl.style.fontFamily = 'var(--font-mono)';
+    valEl.style.color = '#fbbf24';
+    valEl.textContent = `${Math.round(initialValue * 100)}%`;
+    top.appendChild(nameEl);
+    top.appendChild(valEl);
+
+    const input = document.createElement('input');
+    input.type = 'range';
+    input.min = '0';
+    input.max = '100';
+    input.value = String(Math.round(initialValue * 100));
+    input.style.cssText = 'width: 100%; accent-color: #f59e0b; cursor: pointer;';
+    input.addEventListener('input', () => {
+      const v = Number(input.value) / 100;
+      valEl.textContent = `${Math.round(v * 100)}%`;
+      onSlide(v);
+    });
+    wrap.appendChild(top);
+    wrap.appendChild(input);
+    return wrap;
+  };
+
+  const initAudioSettings = audioManager.getSettings();
+  audioSlidersBox.appendChild(
+    createCompactSlider('Master Volume', initAudioSettings.masterVolume, (v) =>
+      audioManager.setMasterVolume(v)
+    )
+  );
+  audioSlidersBox.appendChild(
+    createCompactSlider('Background Music (BGM)', initAudioSettings.musicVolume, (v) =>
+      audioManager.setMusicVolume(v)
+    )
+  );
+  audioSlidersBox.appendChild(
+    createCompactSlider('Sound Effects (SFX)', initAudioSettings.sfxVolume, (v) =>
+      audioManager.setSFXVolume(v)
+    )
+  );
+
+  pauseList.appendChild(audioSlidersBox);
   pauseList.appendChild(exitBtn.element);
 
   const pauseModal = createModal({
@@ -517,9 +601,9 @@ export function createGameShell({ soundEnabled = true } = {}) {
   };
 
   const toggleSound = () => {
-    isSoundOn = !isSoundOn;
+    const isMuted = audioManager.toggleMute();
+    isSoundOn = !isMuted;
     syncSoundButtons();
-    eventBus.emit(EVENTS.SOUND_TOGGLED, { enabled: isSoundOn });
     notification.show({
       message: isSoundOn
         ? 'Đã bật âm thanh hệ thống (Sound ON).'
@@ -588,12 +672,19 @@ export function createGameShell({ soundEnabled = true } = {}) {
 
   unsubscribers.push(
     eventBus.on(EVENTS.MISSION_MODAL_TOGGLED, ({ isOpen }) => {
-      if (!isOpen && pendingHackerTransmission) {
+      if (isOpen) {
+        audioManager.crossFade('fix-bug', { durationMs: 550, loop: true });
+      } else if (pendingHackerTransmission) {
         const nextPayload = pendingHackerTransmission;
         pendingHackerTransmission = null;
         window.setTimeout(() => {
           showHackerTransmissionModal(nextPayload);
         }, 180);
+      } else if (!inspectionModal.isOpen() && !hackerModal.isOpen()) {
+        audioManager.crossFade(getMapBgmForSector(activeSectorId), {
+          durationMs: 650,
+          loop: true,
+        });
       }
     })
   );
@@ -614,6 +705,15 @@ export function createGameShell({ soundEnabled = true } = {}) {
     eventBus.on(EVENTS.SECTOR_CHANGED, ({ sector }) => {
       if (sector && currentSectorTagEl) {
         currentSectorTagEl.textContent = `VỊ TRÍ: ${sector.name}`;
+      }
+      if (sector && sector.id) {
+        activeSectorId = sector.id;
+        if (!missionUI.isOpen() && !inspectionModal.isOpen() && !hackerModal.isOpen()) {
+          audioManager.crossFade(getMapBgmForSector(activeSectorId), {
+            durationMs: 750,
+            loop: true,
+          });
+        }
       }
       syncHudTelemetry();
 

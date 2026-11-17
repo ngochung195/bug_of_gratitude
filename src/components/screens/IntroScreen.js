@@ -114,33 +114,76 @@ export function createIntroScreen({ onNavigate } = {}) {
     menuActions.appendChild(continueBtn.element);
   }
 
-  // Settings Modal
+  // Start Opening BGM (opening.mp3) with fade-in (auto-unlocks on first user gesture if autoplay is blocked)
+  audioManager.playBGM('opening', { loop: true, fadeMs: 700 });
+
+  // Settings Modal (Master Volume, Background Music, Sound Effects, Mute, Saved Progress)
   const settingsContent = document.createElement('div');
   settingsContent.className = 'about-list';
 
+  const createSliderRow = ({ label, sublabel, value, onChange }) => {
+    const row = document.createElement('div');
+    row.style.cssText =
+      'display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-bottom: 1px solid rgba(148,163,184,0.18);';
+
+    const top = document.createElement('div');
+    top.style.cssText = 'display: flex; align-items: center; justify-content: space-between; gap: 12px;';
+
+    const titleWrap = document.createElement('div');
+    titleWrap.innerHTML = `<strong>${label}</strong>${
+      sublabel ? `<br/><small style="color: var(--color-text-muted);">${sublabel}</small>` : ''
+    }`;
+
+    const valBadge = document.createElement('span');
+    valBadge.style.cssText =
+      'font-family: var(--font-mono); font-size: 0.82rem; font-weight: 700; color: var(--color-warm-gold-bright);';
+    valBadge.textContent = `${Math.round(value * 100)}%`;
+
+    top.appendChild(titleWrap);
+    top.appendChild(valBadge);
+
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = '0';
+    slider.max = '100';
+    slider.step = '1';
+    slider.value = String(Math.round(value * 100));
+    slider.style.cssText = 'width: 100%; accent-color: #f59e0b; cursor: pointer;';
+
+    slider.addEventListener('input', () => {
+      const normalized = Number(slider.value) / 100;
+      valBadge.textContent = `${Math.round(normalized * 100)}%`;
+      onChange(normalized);
+    });
+
+    row.appendChild(top);
+    row.appendChild(slider);
+    return row;
+  };
+
   const renderSettingsBody = () => {
     settingsContent.innerHTML = '';
+    const currentSettings = audioManager.getSettings();
 
+    // 1. Mute Toggle Row
     const soundRow = document.createElement('div');
     soundRow.style.cssText =
       'display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(148,163,184,0.2);';
 
     const soundLabel = document.createElement('span');
     soundLabel.innerHTML =
-      '<strong>Âm thanh & Nhạc nền công nghệ bí ẩn:</strong><br/><small style="color: var(--color-text-muted);">Hiệu ứng âm thanh Web Audio & nhạc nền ca trực đêm</small>';
+      '<strong>Trạng thái Âm thanh (Mute / Unmute):</strong><br/><small style="color: var(--color-text-muted);">Bật hoặc tắt toàn bộ âm thanh trong trò chơi</small>';
 
     const toggleAudioBtn = createButton({
-      label: audioManager.enabled ? 'ĐANG BẬT (ON)' : 'ĐANG TẮT (OFF)',
-      variant: audioManager.enabled ? 'warm' : 'secondary',
+      label: currentSettings.muted ? 'ĐANG TẮT (MUTED)' : 'ĐANG BẬT (ACTIVE)',
+      variant: currentSettings.muted ? 'secondary' : 'warm',
       size: 'sm',
-      iconSvg: audioManager.enabled ? ICONS.VOLUME_ON : ICONS.VOLUME_OFF,
+      iconSvg: currentSettings.muted ? ICONS.VOLUME_OFF : ICONS.VOLUME_ON,
       onClick: () => {
-        const next = audioManager.toggleEnabled();
-        if (next) {
-          audioManager.startMysteryAmbient();
+        const isMuted = audioManager.toggleMute();
+        if (!isMuted) {
+          audioManager.playBGM('opening', { loop: true, fadeMs: 500 });
           audioManager.playWarmChime();
-        } else {
-          audioManager.stopMysteryAmbient();
         }
         renderSettingsBody();
       },
@@ -150,6 +193,44 @@ export function createIntroScreen({ onNavigate } = {}) {
     soundRow.appendChild(toggleAudioBtn.element);
     settingsContent.appendChild(soundRow);
 
+    // 2. Master Volume Slider
+    settingsContent.appendChild(
+      createSliderRow({
+        label: 'Master Volume (Âm lượng tổng)',
+        sublabel: 'Điều chỉnh mức âm lượng chung cho cả Nhạc nền & Hiệu ứng',
+        value: currentSettings.masterVolume,
+        onChange: (val) => {
+          audioManager.setMasterVolume(val);
+        },
+      })
+    );
+
+    // 3. Background Music Volume Slider
+    settingsContent.appendChild(
+      createSliderRow({
+        label: 'Background Music (Nhạc nền BGM)',
+        sublabel: 'Âm lượng nhạc nền theo từng phân cảnh (opening, exploration, sky...)',
+        value: currentSettings.musicVolume,
+        onChange: (val) => {
+          audioManager.setMusicVolume(val);
+        },
+      })
+    );
+
+    // 4. Sound Effects Volume Slider
+    settingsContent.appendChild(
+      createSliderRow({
+        label: 'Sound Effects (Hiệu ứng SFX)',
+        sublabel: 'Âm lượng bước chân, quét lỗi, gõ chữ và chuông thông báo',
+        value: currentSettings.sfxVolume,
+        onChange: (val) => {
+          audioManager.setSFXVolume(val);
+          audioManager.playSoftKeyTick();
+        },
+      })
+    );
+
+    // 5. Reset Progress Row
     const resetRow = document.createElement('div');
     resetRow.style.cssText =
       'display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0;';

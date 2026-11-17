@@ -166,16 +166,20 @@ export function createCinematicIntroScreen({ onComplete } = {}) {
     };
 
     if (node.sceneNumber === 1) {
+      audioManager.playBGM('opening', { loop: true, fadeMs: 600 });
       clockEl.textContent = 'CODEGYM IT // ONLINE';
       breachAlertEl.classList.remove('is-visible');
       setCompromised(false);
       startInvestigationBtn.element.style.display = 'none';
     } else if (node.sceneNumber === 2) {
+      audioManager.playBGM('opening', { loop: true, fadeMs: 600 });
       clockEl.textContent = '23 : 47';
       breachAlertEl.classList.remove('is-visible');
       setCompromised(false);
       startInvestigationBtn.element.style.display = 'none';
     } else if (node.sceneNumber === 3) {
+      // Scene 3: Hacker attacks CodeGym internal network -> crossfade to hacker-attack.mp3
+      audioManager.crossFade('hacker-attack', { durationMs: 650, loop: true });
       clockEl.textContent = '⚠ BREACH // 23:48';
       breachAlertEl.classList.add('is-visible');
       setCompromised(true);
@@ -188,11 +192,13 @@ export function createCinematicIntroScreen({ onComplete } = {}) {
         { x: 0, duration: 0.35, ease: 'rough({ strength: 3, points: 12 })' }
       );
     } else if (node.sceneNumber === 4) {
+      audioManager.playBGM('hacker-attack', { loop: true, fadeMs: 500 });
       clockEl.textContent = 'UNKNOWN HACKER // LIVE';
       breachAlertEl.classList.add('is-visible');
       setCompromised(true);
       startInvestigationBtn.element.style.display = 'none';
     } else if (node.sceneNumber === 5) {
+      audioManager.playBGM('hacker-attack', { loop: true, fadeMs: 500 });
       clockEl.textContent = 'MISSION // RESTORE CODEGYM';
       breachAlertEl.classList.remove('is-visible');
       setCompromised(true);
@@ -220,11 +226,10 @@ export function createCinematicIntroScreen({ onComplete } = {}) {
   return {
     element: screen,
     startSequence() {
-      audioManager.startMysteryAmbient();
+      audioManager.playBGM('opening', { loop: true, fadeMs: 650 });
       dialogueBox.start(0);
     },
     destroy() {
-      audioManager.stopMysteryAmbient();
       dialogueBox.destroy();
       screen.remove();
     },

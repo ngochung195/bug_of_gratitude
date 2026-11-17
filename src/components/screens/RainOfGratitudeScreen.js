@@ -96,31 +96,25 @@ export function createRainOfGratitudeScreen({
   searchInput.setAttribute('aria-label', 'Tìm kiếm lời cảm ơn theo tên Mentor');
   searchBox.appendChild(searchInput);
 
+  // Play Rain of Gratitude BGM (continues seamlessly if already crossfaded from 20/11 letter)
+  audioManager.playBGM('rain-of-gratitude', { loop: true, fadeMs: 800 });
+
   const audioBtn = document.createElement('button');
   audioBtn.type = 'button';
   audioBtn.className = 'rain-icon-btn';
   const updateAudioBtnUI = () => {
-    const isOn = audioManager.enabled && ambientStartedByUser;
+    const isOn = audioManager.enabled && !audioManager.muted;
     audioBtn.classList.toggle('is-active', isOn);
     audioBtn.innerHTML = `${isOn ? ICONS.VOLUME_ON : ICONS.VOLUME_OFF}<span>${isOn ? 'Nhạc nền: Bật' : 'Nhạc nền: Tắt'}</span>`;
     audioBtn.setAttribute('aria-pressed', String(isOn));
   };
-  audioManager.enabled = Boolean(soundEnabled);
   updateAudioBtnUI();
 
   audioBtn.addEventListener('click', () => {
-    if (!ambientStartedByUser) {
-      ambientStartedByUser = true;
-      audioManager.setEnabled(true);
-      audioManager.startSkyAmbient();
+    const isMuted = audioManager.toggleMute();
+    if (!isMuted) {
+      audioManager.playBGM('rain-of-gratitude', { loop: true, fadeMs: 500 });
       audioManager.playWarmChime();
-    } else {
-      const nextState = audioManager.toggleEnabled();
-      if (nextState) {
-        audioManager.startSkyAmbient();
-      } else {
-        audioManager.stopSkyAmbient();
-      }
     }
     updateAudioBtnUI();
   });
@@ -623,7 +617,6 @@ export function createRainOfGratitudeScreen({
       if (typeof unsubscribeRealtime === 'function') {
         unsubscribeRealtime();
       }
-      audioManager.stopSkyAmbient();
       canvasEngine.destroy();
       screen.remove();
     },
