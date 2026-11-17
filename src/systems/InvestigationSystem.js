@@ -12,11 +12,11 @@ export const SECTOR_STATUS_LABELS = {
 
 const SECTOR_PREREQUISITE_MISSION = {
   'sector-reception': null,
+  'sector-central-control': null,
   'sector-it-office': null,
   'sector-database-room': 'mission-01',
   'sector-server-room': 'mission-02',
   'sector-security-room': 'mission-03',
-  'sector-central-control': 'mission-04',
 };
 
 export class InvestigationSystem {

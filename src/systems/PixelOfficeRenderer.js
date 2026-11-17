@@ -148,14 +148,14 @@ export class PixelOfficeRenderer {
     }
     g.strokePath();
 
-    // Subtle Floor Branding Texts (like the dark bottom room in the reference image)
+    // Subtle Floor Branding Texts placed along the bottom edge of Reception
     const cx = rx + rw / 2;
-    const cy = ry + rh / 2 + 18;
+    const cy = ry + rh - 30;
 
     this.scene.add
-      .text(cx - 145, cy, '❖ CodeGym HQ', {
+      .text(cx - 155, cy, '❖ CodeGym HQ', {
         fontFamily: 'Be Vietnam Pro, sans-serif',
-        fontSize: '18px',
+        fontSize: '14px',
         fontStyle: 'bold',
         color: '#475569',
       })
@@ -165,7 +165,7 @@ export class PixelOfficeRenderer {
     this.scene.add
       .text(cx, cy, '✦ 20/11 Security', {
         fontFamily: 'Be Vietnam Pro, sans-serif',
-        fontSize: '18px',
+        fontSize: '14px',
         fontStyle: 'bold',
         color: '#475569',
       })
@@ -173,9 +173,9 @@ export class PixelOfficeRenderer {
       .setDepth(1.6);
 
     this.scene.add
-      .text(cx + 150, cy, '★ Gratitude', {
+      .text(cx + 155, cy, '★ Gratitude', {
         fontFamily: 'Be Vietnam Pro, sans-serif',
-        fontSize: '18px',
+        fontSize: '14px',
         fontStyle: 'bold',
         color: '#475569',
       })

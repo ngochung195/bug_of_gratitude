@@ -118,22 +118,25 @@ export class GameScene extends Phaser.Scene {
 
   drawRoomSigns() {
     SECTORS.forEach((sec) => {
-      const cx = sec.x + sec.width / 2;
+      const isReception = sec.id === 'sector-reception';
+      const signX = isReception ? sec.x + 125 : sec.x + sec.width / 2;
+      const signY = isReception ? sec.y + 24 : sec.y + 15;
+      const badgeY = isReception ? sec.y + 44 : sec.y + 34;
 
       this.add
-        .text(cx, sec.y + 15, `${sec.name} — ${sec.viName}`, {
+        .text(signX, signY, `${sec.name} — ${sec.viName}`, {
           fontFamily: 'Be Vietnam Pro, sans-serif',
           fontSize: '11px',
           fontStyle: 'bold',
           color: '#fef3c7',
-          backgroundColor: 'rgba(24, 24, 27, 0.85)',
+          backgroundColor: 'rgba(24, 24, 27, 0.88)',
           padding: { x: 8, y: 3 },
         })
         .setOrigin(0.5)
-        .setDepth(3.2);
+        .setDepth(3.5);
 
       const statusBadge = this.add
-        .text(cx, sec.y + 34, '', {
+        .text(signX, badgeY, '', {
           fontFamily: 'JetBrains Mono, monospace',
           fontSize: '9px',
           fontStyle: 'bold',
@@ -142,7 +145,7 @@ export class GameScene extends Phaser.Scene {
           padding: { x: 6, y: 2 },
         })
         .setOrigin(0.5)
-        .setDepth(3.2);
+        .setDepth(3.5);
 
       this.sectorStatusTexts.set(sec.id, statusBadge);
     });
@@ -150,15 +153,15 @@ export class GameScene extends Phaser.Scene {
 
   placeOfficialBrandElements() {
     if (this.textures.exists('codegym-full-slogan')) {
-      const receptionBanner = this.add.image(816, 742, 'codegym-full-slogan');
-      receptionBanner.setDisplaySize(104, 104);
-      receptionBanner.setAlpha(0.96);
+      const receptionBanner = this.add.image(816, 842, 'codegym-full-slogan');
+      receptionBanner.setDisplaySize(215, 215);
+      receptionBanner.setAlpha(0.98);
       receptionBanner.setDepth(2.5);
     }
 
     if (this.textures.exists('codegym-icon')) {
       const controlEmblem = this.add.image(690, 145, 'codegym-icon');
-      controlEmblem.setDisplaySize(40, 40);
+      controlEmblem.setDisplaySize(44, 44);
       controlEmblem.setAlpha(0.95);
       controlEmblem.setDepth(3.5);
     }
@@ -244,10 +247,15 @@ export class GameScene extends Phaser.Scene {
       const h = obs.height;
 
       if (obs.kind === 'wall') {
-        gFurn.fillStyle(0x64748b, 1);
+        gFurn.fillStyle(0x475569, 1);
         gFurn.fillRect(left, top, w, h);
+        // White 3D Top Cap along the wall
         gFurn.fillStyle(0xf8fafc, 1);
-        gFurn.fillRect(left, top, w, Math.min(8, h));
+        if (w >= h) {
+          gFurn.fillRect(left, top, w, Math.min(8, h));
+        } else {
+          gFurn.fillRect(left + 3, top, Math.max(6, w - 6), h);
+        }
         gFurn.lineStyle(2, 0x18181b, 1);
         gFurn.strokeRect(left, top, w, h);
       } else if (obs.kind === 'desk') {
