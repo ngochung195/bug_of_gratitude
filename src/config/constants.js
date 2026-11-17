@@ -28,6 +28,7 @@ export const UI_SCREENS = {
   GAME_SHELL: 'game_shell',
   LAST_BUG: 'last_bug',
   GRATITUDE_LETTER: 'gratitude_letter',
+  GUIDING_LIGHT_LETTER: 'guiding_light_letter',
   RAIN_OF_GRATITUDE: 'rain_of_gratitude',
   GRATITUDE_SKY: 'gratitude_sky',
 };
@@ -82,6 +83,7 @@ export const EVENTS = {
   LAST_BUG_TRIGGERED: 'last_bug:triggered',
   FIX_LAST_BUG_REQUESTED: 'last_bug:fix_requested',
   GRATITUDE_SUBMITTED: 'gratitude:submitted',
+  GUIDING_LETTER_COMPLETED: 'gratitude:guiding_letter_completed',
   GRATITUDE_APPROVED_RECEIVED: 'gratitude:approved_received',
   GRATITUDE_REACTION_ADDED: 'gratitude:reaction_added',
 };

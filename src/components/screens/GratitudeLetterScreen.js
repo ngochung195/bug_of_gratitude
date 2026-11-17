@@ -360,22 +360,22 @@ export function createGratitudeLetterScreen() {
     const savedLetter = submitResult.letter || creation.letter;
     audioManager.playWarmChime();
 
-    // Animate closing letter & flying up into Rain of Gratitude
+    // Animate closing letter, flying up, slowing down, and dimming into A LETTER TO THOSE WHO GUIDED US
     const envelopeEl = flyStage.querySelector('.gratitude-sealed-envelope');
 
     const tl = gsap.timeline({
       onComplete: () => {
         notification.show({
-          message: `✨ Đã gửi lời chúc tới ${savedLetter.mentorName} lên bầu trời tri ân chung!`,
+          message: `✨ Đã gửi lời chúc tới ${savedLetter.mentorName}! Một bức tâm thư 20/11 đang mở ra...`,
           type: 'warm',
-          duration: 4200,
+          duration: 3800,
         });
         eventBus.emit(EVENTS.GRATITUDE_SUBMITTED, {
           letter: savedLetter,
           syncedToCloud: submitResult.syncedToCloud,
           pendingModeration: false,
           cloudError: submitResult.error,
-          nextScreen: UI_SCREENS.RAIN_OF_GRATITUDE,
+          nextScreen: UI_SCREENS.GUIDING_LIGHT_LETTER,
         });
       },
     });
@@ -398,16 +398,36 @@ export function createGratitudeLetterScreen() {
       { opacity: 1, scale: 1, duration: 0.45, ease: 'back.out(1.5)' }
     );
 
+    // Step 5: Personal envelope starts flying upward
     tl.to(
       envelopeEl,
       {
-        y: -140,
-        scale: 1.15,
-        opacity: 0,
-        duration: 1.1,
-        ease: 'power2.in',
+        y: -85,
+        scale: 1.08,
+        duration: 0.7,
+        ease: 'power2.out',
       },
-      '+=0.45'
+      '+=0.35'
+    );
+
+    // Step 6: Motion slows down and screen gradually dims before Guiding Letter scene
+    tl.to(envelopeEl, {
+      y: -115,
+      scale: 1.02,
+      opacity: 0.35,
+      duration: 0.65,
+      ease: 'power1.out',
+    });
+
+    tl.to(
+      screen,
+      {
+        backgroundColor: '#04060e',
+        opacity: 0.15,
+        duration: 0.65,
+        ease: 'power1.inOut',
+      },
+      '<'
     );
   });
 

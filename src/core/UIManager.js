@@ -3,6 +3,7 @@ import { createCinematicIntroScreen } from '../components/screens/CinematicIntro
 import { createGameShell } from '../components/screens/GameShell.js';
 import { createGratitudeLetterScreen } from '../components/screens/GratitudeLetterScreen.js';
 import { createGratitudeSkyScreen } from '../components/screens/GratitudeSkyScreen.js';
+import { createGuidingLetterScreen } from '../components/screens/GuidingLetterScreen.js';
 import { createIntroScreen } from '../components/screens/IntroScreen.js';
 import { createLastBugScreen } from '../components/screens/LastBugScreen.js';
 import { createLoadingScreen } from '../components/screens/LoadingScreen.js';
@@ -85,7 +86,7 @@ export class UIManager {
 
     this.eventBus.on(EVENTS.GRATITUDE_SUBMITTED, (payload) => {
       this.latestSubmittedLetter = payload?.letter || gratitudeStorage.getLatestLetter();
-      this.showScreen(UI_SCREENS.RAIN_OF_GRATITUDE);
+      this.showScreen(UI_SCREENS.GUIDING_LIGHT_LETTER);
     });
   }
 
@@ -143,6 +144,14 @@ export class UIManager {
         nextInstance = createLastBugScreen();
       } else if (screenKey === UI_SCREENS.GRATITUDE_LETTER) {
         nextInstance = createGratitudeLetterScreen();
+      } else if (screenKey === UI_SCREENS.GUIDING_LIGHT_LETTER) {
+        nextInstance = createGuidingLetterScreen({
+          personalLetter: this.latestSubmittedLetter || gratitudeStorage.getLatestLetter(),
+          soundEnabled: this.soundEnabled,
+          onComplete: () => {
+            this.showScreen(UI_SCREENS.RAIN_OF_GRATITUDE);
+          },
+        });
       } else if (screenKey === UI_SCREENS.RAIN_OF_GRATITUDE) {
         nextInstance = createRainOfGratitudeScreen({
           newlySubmittedLetter: this.latestSubmittedLetter || gratitudeStorage.getLatestLetter(),
@@ -180,6 +189,11 @@ export class UIManager {
         nextInstance.startSequence();
       } else if (
         screenKey === UI_SCREENS.LAST_BUG &&
+        typeof nextInstance.startSequence === 'function'
+      ) {
+        nextInstance.startSequence();
+      } else if (
+        screenKey === UI_SCREENS.GUIDING_LIGHT_LETTER &&
         typeof nextInstance.startSequence === 'function'
       ) {
         nextInstance.startSequence();

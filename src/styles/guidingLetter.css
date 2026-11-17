@@ -1,0 +1,271 @@
+/* ==========================================================================
+   PHASE 8.8.5: A LETTER TO THOSE WHO GUIDED US (SPECIAL 20/11 EXPERIENCE)
+   ========================================================================== */
+
+.guiding-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(251, 191, 36, 0.14) 0%, transparent 52%),
+    radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.18) 0%, transparent 50%),
+    linear-gradient(180deg, #050814 0%, #0d1028 50%, #171033 100%);
+  color: var(--color-text-primary);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  user-select: none;
+}
+
+.guiding-dust-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Top Bar: Scene Title, Subtitle, Sound & Skip Controls */
+.guiding-topbar {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.guiding-scene-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.guiding-scene-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--color-warm-gold-bright);
+  text-transform: uppercase;
+}
+
+.guiding-scene-title {
+  font-family: var(--font-pixel);
+  font-size: clamp(0.86rem, 1.6vw, 1.12rem);
+  color: #fef3c7;
+  text-shadow: 0 0 16px rgba(251, 191, 36, 0.45);
+  margin: 0;
+}
+
+.guiding-top-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Center Stage: Cream Paper Letter & Merging Personal Envelope */
+.guiding-center-stage {
+  position: relative;
+  z-index: 8;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: var(--space-2) 0;
+}
+
+/* Cream Parchment Paper Card */
+.guiding-paper {
+  position: relative;
+  width: 100%;
+  max-width: 740px;
+  max-height: calc(100dvh - 180px);
+  overflow-y: auto;
+  background: linear-gradient(165deg, #fdfaf1 0%, #f7efd9 55%, #f2e5c6 100%);
+  color: #292524;
+  border: 2px solid #d97706;
+  border-radius: 10px;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.75),
+    0 0 42px rgba(251, 191, 36, 0.34),
+    inset 0 0 28px rgba(217, 119, 6, 0.12);
+  padding: var(--space-6) var(--space-6);
+  cursor: pointer;
+  scrollbar-width: thin;
+  scrollbar-color: #d97706 #f7efd9;
+  transition: box-shadow 0.45s ease, filter 0.45s ease;
+}
+
+.guiding-paper.is-dissolving {
+  box-shadow:
+    0 0 80px rgba(251, 191, 36, 0.9),
+    0 0 140px rgba(254, 240, 138, 0.7);
+  filter: brightness(1.35) blur(1px);
+  pointer-events: none;
+}
+
+/* Inner decorative border on the cream paper */
+.guiding-paper__inner {
+  border: 1px solid rgba(180, 83, 9, 0.28);
+  border-radius: 6px;
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.guiding-paper__header {
+  text-align: center;
+  border-bottom: 1.5px solid rgba(180, 83, 9, 0.25);
+  padding-bottom: var(--space-4);
+}
+
+.guiding-paper__title {
+  font-family: var(--font-sans);
+  font-size: clamp(1.18rem, 2.2vw, 1.52rem);
+  font-weight: 700;
+  color: #78350f;
+  letter-spacing: 0.03em;
+  margin: 0 0 6px 0;
+}
+
+.guiding-paper__date-tag {
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #b45309;
+  margin: 0;
+}
+
+/* Body Paragraphs */
+.guiding-paper__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: var(--font-sans);
+  font-size: clamp(0.95rem, 1.45vw, 1.06rem);
+  line-height: 1.75;
+  color: #292524;
+}
+
+.guiding-paragraph {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Highlighted Closing Block */
+.guiding-closing-box {
+  margin-top: var(--space-2);
+  padding: var(--space-4);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.92) 0%, rgba(253, 230, 138, 0.68) 100%);
+  border: 1.5px solid rgba(217, 119, 6, 0.55);
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.28);
+  text-align: center;
+  white-space: pre-wrap;
+  font-weight: 600;
+  color: #78350f;
+}
+
+/* Blinking Typewriter Cursor */
+.guiding-type-cursor {
+  display: inline-block;
+  margin-left: 3px;
+  color: #d97706;
+  font-weight: 700;
+  animation: guidingCursorBlink 0.75s steps(2) infinite;
+}
+
+@keyframes guidingCursorBlink {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Personal Sealed Envelope that Merges with the Dissolving Particles */
+.guiding-merge-envelope {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.5);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  color: #fef08a;
+  filter: drop-shadow(0 0 28px rgba(251, 191, 36, 0.95));
+}
+
+.guiding-merge-envelope__icon {
+  width: 84px;
+  height: 84px;
+  background: rgba(30, 22, 54, 0.92);
+  border: 2px solid #fbbf24;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 42px rgba(251, 191, 36, 0.85);
+}
+
+.guiding-merge-envelope__icon svg {
+  width: 44px;
+  height: 44px;
+}
+
+.guiding-merge-envelope__label {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fef3c7;
+  text-shadow: 0 0 14px rgba(251, 191, 36, 0.8);
+  text-align: center;
+}
+
+/* Bottom Footer Controls (Hint + Continue Button) */
+.guiding-footer {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  max-width: 740px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.guiding-footer__hint {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 680px) {
+  .guiding-screen {
+    padding: var(--space-3);
+  }
+  .guiding-paper {
+    padding: var(--space-4);
+    max-height: calc(100dvh - 155px);
+  }
+  .guiding-paper__inner {
+    padding: var(--space-3);
+  }
+}

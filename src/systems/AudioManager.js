@@ -3,6 +3,9 @@ import { eventBus } from '../core/EventBus.js';
 
 const PENTATONIC_FREQS = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
 const MYSTERY_TECH_FREQS = [196.0, 220.0, 261.63, 293.66, 329.63, 246.94];
+const GENTLE_PIANO_NOTES = [
+  261.63, 329.63, 392.0, 493.88, 349.23, 440.0, 523.25, 392.0,
+];
 
 export class AudioManager {
   constructor(eventBusInstance = eventBus) {
@@ -161,6 +164,55 @@ export class AudioManager {
     });
   }
 
+  playSoftKeyTick() {
+    this.playTone({
+      freq: 480,
+      duration: 0.02,
+      type: 'sine',
+      volume: 0.007,
+    });
+  }
+
+  playPaperOpen() {
+    this.playTone({ freq: 330, duration: 0.16, type: 'sine', volume: 0.018 });
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => {
+        this.playTone({ freq: 440, duration: 0.22, type: 'sine', volume: 0.02 });
+      }, 95);
+    }
+  }
+
+  playPianoClosingChord() {
+    const chord = [261.63, 329.63, 392.0, 493.88, 587.33];
+    chord.forEach((freq, idx) => {
+      if (typeof window !== 'undefined') {
+        window.setTimeout(() => {
+          this.playTone({
+            freq,
+            duration: 1.1,
+            type: 'sine',
+            volume: 0.024,
+          });
+        }, idx * 90);
+      } else {
+        this.playTone({ freq, duration: 0.8, type: 'sine', volume: 0.02 });
+      }
+    });
+  }
+
+  startGentlePianoMelody() {
+    this.ambientMode = 'piano';
+    this.ambientActive = true;
+    if (!this.enabled) return;
+    this.scheduleNextAmbientNote(400);
+  }
+
+  stopGentlePianoMelody() {
+    if (this.ambientMode === 'piano') {
+      this.stopSkyAmbient();
+    }
+  }
+
   startMysteryAmbient() {
     this.ambientMode = 'mystery';
     this.ambientActive = true;
@@ -195,21 +247,32 @@ export class AudioManager {
       }
 
       const pool =
-        this.ambientMode === 'mystery' ? MYSTERY_TECH_FREQS : PENTATONIC_FREQS;
+        this.ambientMode === 'mystery'
+          ? MYSTERY_TECH_FREQS
+          : this.ambientMode === 'piano'
+            ? GENTLE_PIANO_NOTES
+            : PENTATONIC_FREQS;
       const freq = pool[this.ambientNoteIndex % pool.length];
       this.ambientNoteIndex += 1;
 
       this.playTone({
         freq,
-        duration: this.ambientMode === 'mystery' ? 0.65 : 0.85,
+        duration:
+          this.ambientMode === 'piano'
+            ? 1.15
+            : this.ambientMode === 'mystery'
+              ? 0.65
+              : 0.85,
         type: this.ambientMode === 'mystery' ? 'triangle' : 'sine',
-        volume: 0.015,
+        volume: this.ambientMode === 'piano' ? 0.018 : 0.015,
       });
 
       const nextInterval =
         this.ambientMode === 'mystery'
           ? 1800 + (this.ambientNoteIndex % 3) * 450
-          : 2600 + (this.ambientNoteIndex % 3) * 650;
+          : this.ambientMode === 'piano'
+            ? 1450 + (this.ambientNoteIndex % 2) * 550
+            : 2600 + (this.ambientNoteIndex % 3) * 650;
       this.scheduleNextAmbientNote(nextInterval);
     }, delayMs);
   }

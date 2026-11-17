@@ -8,6 +8,7 @@ import './styles/introCinematic.css';
 import './styles/mission.css';
 import './styles/lastBug.css';
 import './styles/gratitudeLetter.css';
+import './styles/guidingLetter.css';
 import './styles/rainOfGratitude.css';
 import './styles/gratitudeSky.css';
 
