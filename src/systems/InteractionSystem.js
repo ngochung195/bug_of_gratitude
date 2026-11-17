@@ -38,7 +38,9 @@ export class InteractionSystem {
 
       const sprite = this.scene.physics.add.staticSprite(cfg.x, cfg.y, textureKey);
       sprite.setDepth(4);
-      sprite.setTint(cfg.color);
+      if (cfg.type === 'prop') {
+        sprite.setTint(cfg.color);
+      }
 
       const codeLabel = this.scene.add
         .text(cfg.x, cfg.y - 36, cfg.code, {

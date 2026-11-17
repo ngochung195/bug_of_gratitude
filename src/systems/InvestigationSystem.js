@@ -225,3 +225,4 @@ export class InvestigationSystem {
 
 export const investigationSystem = new InvestigationSystem();
 export default InvestigationSystem;
+
