@@ -1,10 +1,10 @@
-import { EVENTS } from '../../config/constants.js';
+import { EVENTS, UI_SCREENS } from '../../config/constants.js';
 import { eventBus } from '../../core/EventBus.js';
 import { ICONS } from '../../utils/icons.js';
 import { createButton } from '../Button.js';
 import { createModal } from '../Modal.js';
 
-export function createIntroScreen() {
+export function createIntroScreen({ onNavigate } = {}) {
   const screen = document.createElement('section');
   screen.className = 'bog-screen intro-screen';
   screen.setAttribute('aria-label', 'Intro Screen');
@@ -80,7 +80,19 @@ export function createIntroScreen() {
     },
   });
 
+  const skyBtn = createButton({
+    label: 'GRATITUDE SKY',
+    variant: 'warm',
+    iconSvg: ICONS.STAR,
+    onClick: () => {
+      if (typeof onNavigate === 'function') {
+        onNavigate(UI_SCREENS.GRATITUDE_SKY);
+      }
+    },
+  });
+
   actions.appendChild(startBtn.element);
+  actions.appendChild(skyBtn.element);
   actions.appendChild(aboutBtn.element);
 
   const meta = document.createElement('div');

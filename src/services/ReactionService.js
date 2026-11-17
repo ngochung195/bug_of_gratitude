@@ -184,6 +184,51 @@ export class ReactionService {
   }
 
   /**
+   * Get total number of heart reactions across all approved messages in the database.
+   * Always returns real database count (never fake data).
+   */
+  async getTotalReactionsCount(reactionType = 'heart') {
+    if (!this.client) {
+      let localTotal = 0;
+      this.localCountFallback.forEach((val) => {
+        localTotal += Number(val) || 0;
+      });
+      return {
+        count: localTotal,
+        fromCloud: false,
+        error: getSupabaseStatus().message,
+      };
+    }
+
+    try {
+      const { count, error } = await this.client
+        .from('gratitude_reactions')
+        .select('id', { count: 'exact', head: true })
+        .eq('reaction_type', reactionType);
+
+      if (error) {
+        return {
+          count: 0,
+          fromCloud: false,
+          error: error.message || 'Không thể tải tổng số lượt thả tim.',
+        };
+      }
+
+      return {
+        count: typeof count === 'number' ? count : 0,
+        fromCloud: true,
+        error: null,
+      };
+    } catch (err) {
+      return {
+        count: 0,
+        fromCloud: false,
+        error: err?.message || 'Lỗi kết nối mạng khi tải tổng số lượt thả tim.',
+      };
+    }
+  }
+
+  /**
    * Get total heart reaction count for a single gratitude message.
    */
   async getReactionCount(messageId, reactionType = 'heart') {

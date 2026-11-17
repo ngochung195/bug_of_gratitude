@@ -1,0 +1,500 @@
+/* ==========================================================================
+   PHASE 8: GRATITUDE SKY - STATISTICS, CONSTELLATION, WALL & SHARE CARD
+   ========================================================================== */
+
+.gsky-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 20% 12%, rgba(139, 92, 246, 0.16) 0%, transparent 45%),
+    radial-gradient(circle at 82% 24%, rgba(251, 191, 36, 0.12) 0%, transparent 45%),
+    linear-gradient(180deg, #060913 0%, #0b1022 45%, #120e29 100%);
+  color: var(--color-text-primary);
+  padding-bottom: var(--space-8);
+}
+
+.gsky-container {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* Top Navigation Bar */
+.gsky-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.22);
+}
+
+.gsky-topbar__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gsky-topbar__badge {
+  display: inline-block;
+  width: fit-content;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-warm-gold-bright);
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.gsky-topbar__title {
+  font-family: var(--font-pixel);
+  font-size: clamp(1.05rem, 2.2vw, 1.45rem);
+  color: #fef3c7;
+  text-shadow: 0 0 18px rgba(251, 191, 36, 0.4);
+  margin: 0;
+}
+
+.gsky-topbar__subtitle {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.gsky-topbar__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* 1. Statistics Grid */
+.gsky-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.gsky-stat-card {
+  position: relative;
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  box-shadow: var(--shadow-pixel-sm), 0 0 22px rgba(245, 158, 11, 0.12);
+}
+
+.gsky-stat-card--blue {
+  border-color: rgba(0, 229, 255, 0.45);
+  box-shadow: var(--shadow-pixel-sm), 0 0 22px rgba(0, 229, 255, 0.12);
+}
+
+.gsky-stat-card--pink {
+  border-color: rgba(244, 63, 94, 0.45);
+  box-shadow: var(--shadow-pixel-sm), 0 0 22px rgba(244, 63, 94, 0.12);
+}
+
+.gsky-stat-card__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--color-warm-gold-bright);
+  flex-shrink: 0;
+}
+
+.gsky-stat-card--blue .gsky-stat-card__icon {
+  background: rgba(0, 229, 255, 0.14);
+  color: var(--color-electric-blue);
+}
+
+.gsky-stat-card--pink .gsky-stat-card__icon {
+  background: rgba(244, 63, 94, 0.15);
+  color: #fb7185;
+}
+
+.gsky-stat-card__icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.gsky-stat-card__value {
+  font-family: var(--font-pixel);
+  font-size: clamp(1.15rem, 2.2vw, 1.55rem);
+  color: #f8fafc;
+  margin-bottom: 4px;
+}
+
+.gsky-stat-card__label {
+  font-size: 0.84rem;
+  color: var(--color-text-secondary);
+}
+
+/* 2. Constellation Section */
+.gsky-constellation-section {
+  background: rgba(11, 16, 33, 0.86);
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-pixel);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.gsky-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.gsky-section-title {
+  font-family: var(--font-pixel);
+  font-size: 0.92rem;
+  color: var(--color-warm-gold-bright);
+  margin: 0;
+}
+
+.gsky-section-desc {
+  font-size: 0.84rem;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
+.gsky-mode-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.gsky-mode-btn {
+  background: rgba(17, 25, 48, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.gsky-mode-btn:hover {
+  border-color: var(--color-electric-blue);
+  color: var(--color-text-primary);
+}
+
+.gsky-mode-btn.is-active {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: var(--color-warm-gold-bright);
+  color: #fef3c7;
+  box-shadow: var(--glow-warm);
+}
+
+.gsky-constellation-stage {
+  position: relative;
+  width: 100%;
+  height: 390px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.gsky-constellation-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.gsky-constellation-legend {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.gsky-legend-items {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.gsky-legend-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.gsky-legend-dot--real {
+  background: #fbbf24;
+  box-shadow: 0 0 8px #fbbf24;
+}
+
+.gsky-legend-dot--guide {
+  background: rgba(148, 163, 184, 0.45);
+}
+
+/* 3. Gratitude Wall Section */
+.gsky-wall-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.gsky-wall-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+
+.gsky-wall-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.gsky-sort-badge {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-electric-blue-soft);
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.gsky-wall-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.gsky-wall-card {
+  background: linear-gradient(165deg, rgba(25, 36, 69, 0.88) 0%, rgba(15, 23, 42, 0.92) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.38);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-3);
+  box-shadow: var(--shadow-pixel-sm);
+  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.gsky-wall-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-warm-gold-bright);
+  box-shadow: var(--glow-warm);
+}
+
+.gsky-wall-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.gsky-wall-card__mentor {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fef3c7;
+  word-break: break-word;
+}
+
+.gsky-wall-card__date {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.gsky-wall-card__message {
+  font-size: 0.9rem;
+  line-height: 1.58;
+  color: var(--color-text-primary);
+  background: rgba(7, 11, 20, 0.52);
+  border-left: 2px solid var(--color-warm-gold-bright);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.gsky-wall-card__sender {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+.gsky-wall-card__sender strong {
+  color: var(--color-electric-blue-soft);
+}
+
+.gsky-wall-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.gsky-wall-card__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gsky-wall-status {
+  text-align: center;
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-4);
+  color: var(--color-text-secondary);
+}
+
+.gsky-load-more-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-2);
+}
+
+/* 4. Closing Message Section */
+.gsky-closing-banner {
+  position: relative;
+  text-align: center;
+  background: radial-gradient(circle at 50% 0%, rgba(251, 191, 36, 0.18) 0%, rgba(17, 24, 48, 0.92) 70%);
+  border: 1px solid rgba(251, 191, 36, 0.55);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-5);
+  box-shadow: var(--glow-warm);
+}
+
+.gsky-closing-banner__stars {
+  color: var(--color-warm-gold-bright);
+  margin-bottom: var(--space-3);
+  display: inline-flex;
+  gap: var(--space-2);
+}
+
+.gsky-closing-banner__stars svg {
+  width: 24px;
+  height: 24px;
+}
+
+.gsky-closing-banner__quote {
+  max-width: 760px;
+  margin: 0 auto;
+  font-size: clamp(0.98rem, 1.6vw, 1.16rem);
+  line-height: 1.85;
+  color: #fef3c7;
+  font-weight: 500;
+}
+
+.gsky-closing-banner__sub {
+  margin-top: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--color-electric-blue-soft);
+}
+
+/* 5. Share Card Preview & Download Modal */
+.gsky-share-modal {
+  position: relative;
+  width: 100%;
+  max-width: 680px;
+  background: linear-gradient(160deg, #1b2442 0%, #0f172a 100%);
+  border: 1px solid var(--color-warm-gold-bright);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.82), var(--glow-warm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.gsky-share-canvas-wrap {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  background: #070b16;
+}
+
+.gsky-share-canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.gsky-share-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 992px) {
+  .gsky-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .gsky-wall-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .gsky-container {
+    padding: var(--space-3);
+    gap: var(--space-4);
+  }
+  .gsky-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .gsky-wall-grid {
+    grid-template-columns: 1fr;
+  }
+  .gsky-constellation-stage {
+    height: 300px;
+  }
+}

@@ -1,6 +1,7 @@
 import gsap from 'gsap';
 import { createGameShell } from '../components/screens/GameShell.js';
 import { createGratitudeLetterScreen } from '../components/screens/GratitudeLetterScreen.js';
+import { createGratitudeSkyScreen } from '../components/screens/GratitudeSkyScreen.js';
 import { createIntroScreen } from '../components/screens/IntroScreen.js';
 import { createLastBugScreen } from '../components/screens/LastBugScreen.js';
 import { createLoadingScreen } from '../components/screens/LoadingScreen.js';
@@ -95,7 +96,11 @@ export class UIManager {
       let nextInstance = null;
 
       if (screenKey === UI_SCREENS.INTRO) {
-        nextInstance = createIntroScreen();
+        nextInstance = createIntroScreen({
+          onNavigate: (targetScreen) => {
+            this.showScreen(targetScreen);
+          },
+        });
       } else if (screenKey === UI_SCREENS.LOADING) {
         nextInstance = createLoadingScreen({
           onComplete: () => {
@@ -114,6 +119,12 @@ export class UIManager {
         nextInstance = createRainOfGratitudeScreen({
           newlySubmittedLetter: this.latestSubmittedLetter || gratitudeStorage.getLatestLetter(),
           soundEnabled: this.soundEnabled,
+          onNavigate: (targetScreen) => {
+            this.showScreen(targetScreen);
+          },
+        });
+      } else if (screenKey === UI_SCREENS.GRATITUDE_SKY) {
+        nextInstance = createGratitudeSkyScreen({
           onNavigate: (targetScreen) => {
             this.showScreen(targetScreen);
           },

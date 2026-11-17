@@ -8,6 +8,7 @@ import './styles/mission.css';
 import './styles/lastBug.css';
 import './styles/gratitudeLetter.css';
 import './styles/rainOfGratitude.css';
+import './styles/gratitudeSky.css';
 
 import { EVENTS } from './config/constants.js';
 import { eventBus } from './core/EventBus.js';

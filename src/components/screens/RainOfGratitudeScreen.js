@@ -133,6 +133,12 @@ export function createRainOfGratitudeScreen({
     onClick: () => navigateTo(UI_SCREENS.GRATITUDE_LETTER),
   });
 
+  const skyWallBtn = document.createElement('button');
+  skyWallBtn.type = 'button';
+  skyWallBtn.className = 'rain-icon-btn is-active';
+  skyWallBtn.innerHTML = `${ICONS.STAR}<span>Gratitude Sky</span>`;
+  skyWallBtn.addEventListener('click', () => navigateTo(UI_SCREENS.GRATITUDE_SKY));
+
   const homeBtn = document.createElement('button');
   homeBtn.type = 'button';
   homeBtn.className = 'rain-icon-btn';
@@ -141,6 +147,7 @@ export function createRainOfGratitudeScreen({
 
   controls.appendChild(searchBox);
   controls.appendChild(audioBtn);
+  controls.appendChild(skyWallBtn);
   controls.appendChild(writeBtn.element);
   controls.appendChild(homeBtn);
 
@@ -627,3 +634,4 @@ export function createRainOfGratitudeScreen({
 }
 
 export default createRainOfGratitudeScreen;
+

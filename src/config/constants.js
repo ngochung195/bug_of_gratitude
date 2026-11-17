@@ -22,6 +22,7 @@ export const UI_SCREENS = {
   LAST_BUG: 'last_bug',
   GRATITUDE_LETTER: 'gratitude_letter',
   RAIN_OF_GRATITUDE: 'rain_of_gratitude',
+  GRATITUDE_SKY: 'gratitude_sky',
 };
 
 export const SCENE_KEYS = {

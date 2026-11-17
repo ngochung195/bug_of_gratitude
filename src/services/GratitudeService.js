@@ -365,6 +365,88 @@ export class GratitudeService {
   }
 
   /**
+   * Get real community statistics from Supabase:
+   * - totalApprovedMessages (is_approved = true)
+   * - totalHeartReactions (reaction_type = 'heart')
+   * - uniqueMentorsCount (distinct normalized mentor_name among approved messages)
+   * Strictly uses real database figures (never fabricates fake numbers).
+   */
+  async getCommunityStatistics() {
+    if (!this.client) {
+      return {
+        totalApprovedMessages: 0,
+        totalHeartReactions: 0,
+        uniqueMentorsCount: 0,
+        fromCloud: false,
+        error: getSupabaseStatus().message,
+      };
+    }
+
+    try {
+      const [messagesRes, reactionsRes] = await Promise.all([
+        this.client
+          .from('gratitude_messages')
+          .select('id, mentor_name, is_approved', { count: 'exact' })
+          .eq('is_approved', true),
+        this.client
+          .from('gratitude_reactions')
+          .select('id', { count: 'exact', head: true })
+          .eq('reaction_type', 'heart'),
+      ]);
+
+      if (messagesRes.error) {
+        return {
+          totalApprovedMessages: 0,
+          totalHeartReactions: 0,
+          uniqueMentorsCount: 0,
+          fromCloud: false,
+          error:
+            messagesRes.error.message || 'Không thể tải thống kê lời cảm ơn từ cơ sở dữ liệu.',
+        };
+      }
+
+      const approvedRows = Array.isArray(messagesRes.data)
+        ? messagesRes.data.filter((row) => row && row.is_approved === true)
+        : [];
+
+      const totalApprovedMessages =
+        typeof messagesRes.count === 'number' ? messagesRes.count : approvedRows.length;
+
+      const mentorSet = new Set();
+      approvedRows.forEach((row) => {
+        const normalizedMentor = String(row.mentor_name || '')
+          .trim()
+          .replace(/\s+/g, ' ')
+          .toLowerCase();
+        if (normalizedMentor) {
+          mentorSet.add(normalizedMentor);
+        }
+      });
+
+      const totalHeartReactions =
+        !reactionsRes.error && typeof reactionsRes.count === 'number'
+          ? reactionsRes.count
+          : 0;
+
+      return {
+        totalApprovedMessages,
+        totalHeartReactions,
+        uniqueMentorsCount: mentorSet.size,
+        fromCloud: true,
+        error: null,
+      };
+    } catch (err) {
+      return {
+        totalApprovedMessages: 0,
+        totalHeartReactions: 0,
+        uniqueMentorsCount: 0,
+        fromCloud: false,
+        error: err?.message || 'Lỗi kết nối mạng khi tải thống kê bầu trời tri ân.',
+      };
+    }
+  }
+
+  /**
    * Subscribe to Realtime updates for newly approved messages (`is_approved = true`).
    * Prevents duplicate channels by reusing `this.activeChannel`.
    */
